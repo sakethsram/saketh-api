@@ -136,3 +136,35 @@ http://localhost:8501
 ## License
 This project is licensed under the MIT License.
 
+
+### PGSQl Database details
+#### DB Name: ecommate
+#### Username: dataworkx
+#### Password: jnjnuh
+#### SQL Commands
+```sql
+-- login to database
+psql -h 127.0.0.1 -U dataworkx ecommate
+
+-- Print user details
+SELECT
+    "users".id,
+    "users".user_first_name,
+    "users".user_last_name,
+    "users".user_login_id,
+    "users".user_password,
+    roles.role_name,
+    roles.id
+FROM
+    "users"
+LEFT JOIN
+    user_roles ON "users".id = user_roles.user_id
+LEFT JOIN
+    roles ON user_roles.role_id = roles.id;
+
+-- Update user's pass with common password 'first char in email + jnjnuh'
+UPDATE users
+SET user_password = LOWER(LEFT(user_login_id, 1)) || 'jnjnuh'
+WHERE id > 0;
+```
+
