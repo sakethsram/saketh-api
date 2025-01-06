@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from app.routers import auth, movies
+from app.routers import auth, users
 from app.database import Base, engine
 from app.config import load_clients
 import json
@@ -23,6 +23,6 @@ async def startup_event():
 
 # Include routers
 app.include_router(auth.router)
-app.include_router(movies.router)
+app.include_router(users.router)
 
 logging.debug("Debugging initialized")

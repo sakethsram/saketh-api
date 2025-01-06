@@ -1,12 +1,11 @@
 from sqlalchemy import Column, Integer, String, TIMESTAMP, SmallInteger, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
+from app.database import Base
 
-Base = declarative_base()
 
 class User(Base):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
     user_first_name = Column(String(125), nullable=False)
@@ -15,7 +14,7 @@ class User(Base):
     user_phone_number = Column(String(125), nullable=True)
     user_login_id = Column(String(125), nullable=False, unique=True)
     user_password = Column(String(250), nullable=False)
-    client_id = Column(Integer, nullable=False)
+    client_id = Column(Integer, ForeignKey("client_master.id", ondelete="CASCADE"), nullable=False)
     created_on = Column(TIMESTAMP, default=datetime.utcnow)
     created_by = Column(String(125), nullable=True)
     modified_on = Column(TIMESTAMP, nullable=True, onupdate=datetime.utcnow)
@@ -27,7 +26,7 @@ class User(Base):
 
 
 class Role(Base):
-    __tablename__ = 'roles'
+    __tablename__ = "roles"
 
     id = Column(Integer, primary_key=True, index=True)
     role_name = Column(String(125), nullable=False)
@@ -43,11 +42,11 @@ class Role(Base):
 
 
 class UserRole(Base):
-    __tablename__ = 'user_roles'
+    __tablename__ = "user_roles"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    role_id = Column(Integer, ForeignKey("roles.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    role_id = Column(Integer, ForeignKey("roles.id", ondelete="CASCADE"), nullable=False)
     created_on = Column(TIMESTAMP, default=datetime.utcnow)
     created_by = Column(String(125), nullable=True)
     modified_on = Column(TIMESTAMP, nullable=True, onupdate=datetime.utcnow)
@@ -57,13 +56,3 @@ class UserRole(Base):
     # Relationships
     user = relationship("User", back_populates="user_roles")
     role = relationship("Role", back_populates="user_roles")
-
-
-class Movie(Base):
-    __tablename__ = 'movies'
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, index=True)
-    director = Column(String)
-    genre = Column(String)
-    year = Column(Integer)
-    

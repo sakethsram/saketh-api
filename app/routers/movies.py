@@ -8,16 +8,6 @@ from pdbwhereami import whereami, whocalledme
 
 router = APIRouter()
 
-@router.post("/movies/", response_model=MovieResponse)
-def create_movie(
-    movie: MovieCreate, 
-    db: Session = Depends(get_db), 
-):
-    db_movie = Movie(**movie.dict())
-    db.add(db_movie)
-    db.commit()
-    db.refresh(db_movie)
-    return db_movie
 
 @router.get("/movies", response_model=list[MovieSchema])
 def list_all_movies(
