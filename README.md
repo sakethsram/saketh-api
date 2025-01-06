@@ -144,8 +144,24 @@ This project is licensed under the MIT License.
 #### Password: jnjnuh
 #### SQL Commands
 ```sql
+-- Create database 'ecommate' and user 'dataworkx'
+---- Login to sql with default username and password 'jnjnuh'
+psql -h 127.0.0.1 -U postgres postgres
+
+-- Creating New DB
+	CREATE DATABASE ecommate;
+
+-- Creating USER
+	CREATE USER dataworkx WITH PASSWORD 'jnjnuh';
+
+-- Granting previleges to use on NEW DB
+	GRANT ALL PRIVILEGES ON DATABASE ecommate to dataworkx;
+
+-- Make the user as Super User
+	ALTER USER dataworkx WITH SUPERUSER;
+
 -- login to database
-psql -h 127.0.0.1 -U dataworkx ecommate
+   psql -h 127.0.0.1 -U dataworkx ecommate
 
 -- Print user details
 SELECT
