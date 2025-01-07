@@ -56,3 +56,68 @@ class UserRole(Base):
     # Relationships
     user = relationship("User", back_populates="user_roles")
     role = relationship("Role", back_populates="user_roles")
+
+class ClientMaster(Base):
+    __tablename__ = "client_master"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(125), nullable=False)
+    pan = Column(String(125), nullable=False)
+    gst = Column(String(125), nullable=False)
+    client_reg_address_line_1 = Column(String(250), nullable=False)
+    client_reg_address_line_2 = Column(String(250), nullable=True)
+    client_reg_city = Column(String(125), nullable=False)
+    client_reg_state = Column(String(125), nullable=False)
+    client_reg_country = Column(String(125), nullable=False)
+    url = Column(String(125), nullable=True)
+    created_on = Column(TIMESTAMP, default=datetime.utcnow, nullable=False)
+    created_by = Column(String(125), nullable=True)
+    modified_on = Column(TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    modified_by = Column(String(125), nullable=True)
+    active_flag = Column(SmallInteger, default=1, nullable=False)
+
+class DistyMaster(Base):
+    __tablename__ = "disty_master"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(125), nullable=False)
+    pan = Column(String(125), nullable=True)
+    gst = Column(String(125), nullable=True)
+    registered_address_line_1 = Column(String(250), nullable=True)
+    registered_address_line_2 = Column(String(250), nullable=True)
+    registered_city = Column(String(125), nullable=True)
+    registered_state = Column(String(125), nullable=True)
+    registered_country = Column(String(125), nullable=True)
+    created_on = Column(TIMESTAMP, default=datetime.utcnow, nullable=False)
+    created_by = Column(String(125), nullable=True)
+    modified_on = Column(TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    modified_by = Column(String(125), nullable=True)
+    active_flag = Column(SmallInteger, default=1, nullable=False)
+
+class EvenflowDistys(Base):
+    __tablename__ = "evenflow_distys"
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey("client_master.id"), nullable=False)
+    disty_id = Column(Integer, ForeignKey("disty_master.id"), nullable=False)
+    created_on = Column(TIMESTAMP, default=datetime.utcnow)
+    created_by = Column(String(125), default="bhagavan")
+    modified_on = Column(TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow)
+    modified_by = Column(String(125), default="bhagavan")
+    active_flag = Column(SmallInteger, default=1, nullable=False)
+
+
+class EvenFlowAccountingDetails(Base):
+    __tablename__ = "evenflow_accounting_details"
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey("client_master.id"), nullable=False)
+    invoice_inputs = Column(String(125), nullable=False)
+    invoice_number_auto = Column(SmallInteger, nullable=False)
+    accounting_tool_name = Column(String(125), nullable=False)
+    accounting_tool_url = Column(String(125), nullable=False)
+    accounting_tool_userid = Column(String(125), nullable=False)
+    accounting_tool_pwd = Column(String(125), nullable=False)
+    created_on = Column(TIMESTAMP, default=datetime.utcnow)
+    created_by = Column(String(125), default="bhagavan")
+    modified_on = Column(TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow)
+    modified_by = Column(String(125), default="bhagavan")
+    active_flag = Column(SmallInteger, default=1, nullable=False)
