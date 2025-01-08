@@ -4,8 +4,6 @@ from typing import List
 from app.dependencies import get_db
 from app.models import User
 from app.schemas import UserSchema
-from app.security import decode_access_token
-import logging
 
 router = APIRouter()
 
@@ -27,8 +25,6 @@ def list_users(
 
     # Extract the actual token
     token = token_parts[1]
-    decoded_data = decode_access_token(token)
-    logging.debug(f"decoded_data :{decoded_data}")
     
     # Fetch all active users
     users = db.query(User).filter(User.active_flag == 1).all()
