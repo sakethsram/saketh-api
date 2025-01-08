@@ -26,4 +26,4 @@ curl -X GET "http://127.0.0.1:8000/users" -H "Authorization: Bearer xxxxxx....EM
     content-length: 283 
     content-type: application/json 
     date: Mon,06 Jan 2025 04:48:08 GMT 
-    server: uvicorn 
+    server: uvicorn
