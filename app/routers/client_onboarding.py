@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.dependencies import get_db
 from app.models import EvenflowDistys, EvenFlowAccountingDetails
 from app.schemas import ClientOnboardingRequest
+from app.security import validate_token
 from datetime import datetime
 import logging
 
@@ -12,27 +13,19 @@ router = APIRouter()
 def client_onboarding(
     request: ClientOnboardingRequest,
     db: Session = Depends(get_db),
-    authorization: str = Header(None, description="Bearer token for authentication", 
-                                example="Bearer your_token_here"),
+    authorization: str = Header(None, description="Bearer token for authentication")
 ):
-    # Authorization check
-    if not authorization:
-        logging.debug("Authorization header is missing")
-        raise HTTPException(status_code=403, detail="Authorization header missing")
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=403, detail="Authorization header missing or invalid")
 
-    # Ensure the token is formatted correctly
-    token_parts = authorization.split()
-    if len(token_parts) != 2 or token_parts[0].lower() != "bearer":
-        logging.debug(f"Invalid Authorization header format: {authorization}")
-        raise HTTPException(status_code=403, detail="Invalid Authorization header format")
+    token = authorization.split(" ")[1]
+    payload = validate_token(token, db)
 
-    token = token_parts[1]
-    logging.debug(f"Extracted Token: {token}")
-
-    client_id = 1
-    created_by = "bhagavan"
-    modified_by = "bhagavan"
+    client_id = payload['client_id']
+    created_by = payload['user_login_id']
+    modified_by = payload['user_login_id']
     isactive = 1
+
     logging.debug(f"Initial values set: client_id={client_id}, created_by={created_by}, \
                   modified_by={modified_by}, isactive={isactive}")
 

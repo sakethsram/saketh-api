@@ -24,6 +24,8 @@ class User(Base):
     # Relationship with UserRole
     user_roles = relationship("UserRole", back_populates="user")
 
+    # Relationship with user tokens
+    tokens = relationship("UserTokens", back_populates="user", cascade="all, delete-orphan")
 
 class Role(Base):
     __tablename__ = "roles"
@@ -121,3 +123,14 @@ class EvenFlowAccountingDetails(Base):
     modified_on = Column(TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow)
     modified_by = Column(String(125), default="bhagavan")
     active_flag = Column(SmallInteger, default=1, nullable=False)
+
+class UserTokens(Base):
+    __tablename__ = "user_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    token = Column(String, nullable=False)
+    created_on = Column(TIMESTAMP, default=datetime.utcnow)
+
+    # Relationship with User
+    user = relationship("User", back_populates="tokens")
