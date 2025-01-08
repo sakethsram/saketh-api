@@ -25,8 +25,9 @@ def list_users(
 
     # Extract the actual token
     token = token_parts[1]
-    
+    print(f"Extracted Token: {token}")
     # Fetch all active users
+
     users = db.query(User).filter(User.active_flag == 1).all()
     if not users:
         raise HTTPException(status_code=404, detail="No active users found")
