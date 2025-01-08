@@ -50,11 +50,13 @@ def login(
             detail="User has no assigned roles or roles are inactive.",
         )
 
-    # Debug logging for roles and user details
     logging.debug(f"User: {user.user_first_name} {user.user_last_name}, Roles: {roles}, Client ID: {user.client_id}")
 
     # Generate access token
-    access_token = create_access_token(data={"sub": user.user_login_id, "roles": roles})
+    access_token = create_access_token(data={
+        "user_login_id": user.user_login_id,
+        "roles": roles,
+        "client_id": user.client_id})
 
     return {
         "access_token": access_token,
