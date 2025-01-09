@@ -35,9 +35,9 @@ def client_onboarding(
         new_disty = EvenflowDistys(
             client_id=client_id,
             disty_id=disty.disty_id,
-            created_on=datetime.utcnow(),
+            created_on=datetime.now(),
             created_by=created_by,
-            modified_on=datetime.utcnow(),
+            modified_on=datetime.now(),
             modified_by=modified_by,
             active_flag=isactive,
         )
@@ -54,9 +54,9 @@ def client_onboarding(
         accounting_tool_url=details.accounting_tool_url,
         accounting_tool_userid=details.accounting_tool_userid,
         accounting_tool_pwd=details.accounting_tool_pwd,
-        created_on=datetime.utcnow(),
+        created_on=datetime.now(),
         created_by=created_by,
-        modified_on=datetime.utcnow(),
+        modified_on=datetime.now(),
         modified_by=modified_by,
         active_flag=isactive,
     )
