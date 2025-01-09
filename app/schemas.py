@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from typing import List
+from datetime import datetime
 
 class UserBase(BaseModel):
     username: str
@@ -43,3 +44,11 @@ class ClientOnboardingRequest(BaseModel):
     b2b_distributors: List[DistyInput]
     accounting_tool_details: AccountingToolDetails
 
+class UserTokenSchema(BaseModel):
+    id: int
+    user_id: int
+    token: str
+    created_on: datetime
+
+    class Config:
+        orm_mode = True
