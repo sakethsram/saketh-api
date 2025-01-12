@@ -142,3 +142,7 @@ FETCH_TOTAL_COUNT_PO_LISTING_QUERY = """
             	EPO.po_processing_status = 'OPEN' 
         ) AS RESULT {whereCondition}
     """
+
+PO_DETAILS_QUERY_BY_PO_NUMBER = """
+    SELECT * FROM evenflow_purchase_orders WHERE po_number = '{po_number}'
+    """

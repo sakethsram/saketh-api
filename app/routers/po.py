@@ -4,7 +4,7 @@ from sqlalchemy.sql import text
 from typing import List
 from app.dependencies import get_db
 from app.security import decode_access_token
-from app.queries.po import FETCH_PO_LISTING_QUERY, FETCH_TOTAL_COUNT_PO_LISTING_QUERY
+from app.queries.po import FETCH_PO_LISTING_QUERY, FETCH_TOTAL_COUNT_PO_LISTING_QUERY, PO_DETAILS_QUERY_BY_PO_NUMBER
 
 router = APIRouter()
 
@@ -65,4 +65,40 @@ def list_users(
     return {
         "poRecordCount": totalRecords,
         "poRecords": result
+    }
+
+@router.get("/poDetailsByPoNumber")
+def list_users(
+    poNumber: str = Query(None, description="Page number to fetch"),
+    db: Session = Depends(get_db),
+    authorization: str = Header(None, description="Bearer token for authentication", example="Bearer your_token_here")
+):
+    """
+    Fetch purchase order and invoice details with raw SQL.
+    """
+    # Validate Authorization Header
+    if not authorization:
+        raise HTTPException(status_code=403, detail="Authorization header missing")
+    
+    # Parse the token
+    token_parts = authorization.split()
+    if len(token_parts) != 2 or token_parts[0].lower() != "bearer":
+        raise HTTPException(status_code=403, detail="Invalid Authorization header format")
+
+    token = token_parts[1]
+    try:
+        decoded_details = decode_access_token(token)
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+    if not poNumber:
+        raise HTTPException(status_code=400, detail=f"Invalid input: {str(e)}")
+    
+    values = {"po_number": poNumber}
+    poDetailsQuery = PO_DETAILS_QUERY_BY_PO_NUMBER.format(**values)
+    try:
+        poDeatils = db.execute(text(poDetailsQuery)).mappings().all()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
+    return {
+        "poDetails": poDeatils
     }
