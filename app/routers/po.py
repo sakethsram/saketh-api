@@ -4,7 +4,7 @@ from sqlalchemy.sql import text
 from typing import List
 from app.dependencies import get_db
 from app.security import decode_access_token
-from app.queries.po import FETCH_PO_LISTING_QUERY, FETCH_TOTAL_COUNT_PO_LISTING_QUERY, PO_DETAILS_QUERY_BY_PO_NUMBER
+from app.queries.po import FETCH_PO_LISTING_QUERY, FETCH_TOTAL_COUNT_PO_LISTING_QUERY, PO_DETAILS_QUERY_BY_PO_NUMBER, PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER
 
 router = APIRouter()
 
@@ -39,14 +39,14 @@ def list_users(
     condition = ""
     if poNumber:    
         condition =  " WHERE RESULT.po_number = '"+poNumber+"' "
-    if startDate:
+    if startDate is not None:
         if condition == "":
-            condition = condition + " RESULT.po_created >= '"+startDate+"' "
+            condition =  " WHERE RESULT.po_created >= '"+startDate+"' "
         else:
             condition = condition + " AND RESULT.po_created >= '"+startDate+"' "
-    if endDate:
+    if endDate is not None:
         if condition == "":
-            condition = condition + " RESULT.po_created <= '"+startDate+"' "
+            condition =  " WHERE RESULT.po_created <= '"+endDate+"' "
         else:
             condition = condition + " AND RESULT.po_created <= '"+endDate+"' "
         
@@ -59,7 +59,7 @@ def list_users(
         raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
     
     try:
-        totalRecords = db.execute(text(FETCH_TOTAL_COUNT_PO_LISTING_QUERY_FORMATED)).mappings().all()
+        totalRecords = db.execute(text(FETCH_TOTAL_COUNT_PO_LISTING_QUERY_FORMATED)).mappings().first()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
     return {
@@ -96,9 +96,17 @@ def list_users(
     values = {"po_number": poNumber}
     poDetailsQuery = PO_DETAILS_QUERY_BY_PO_NUMBER.format(**values)
     try:
-        poDeatils = db.execute(text(poDetailsQuery)).mappings().all()
+        poDeatils = db.execute(text(poDetailsQuery)).mappings().first()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
+    
+    poLineItemDetailsQuery = PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER.format(**values)
+    try:
+        poLineItemDeatils = db.execute(text(poLineItemDetailsQuery)).mappings().all()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
+    
     return {
-        "poDetails": poDeatils
+        "poDetails": poDeatils,
+        "poLineItemDeatils": poLineItemDeatils
     }

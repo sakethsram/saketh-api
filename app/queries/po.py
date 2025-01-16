@@ -144,5 +144,49 @@ FETCH_TOTAL_COUNT_PO_LISTING_QUERY = """
     """
 
 PO_DETAILS_QUERY_BY_PO_NUMBER = """
-    SELECT * FROM evenflow_purchase_orders WHERE po_number = '{po_number}'
+    SELECT  
+	    po_status,
+	    vendor,
+	    ship_to_location,
+	    ordered_on,
+	    ship_window_from,
+	    freight_terms,
+	    payment_method,
+	    payment_terms,
+	    purchasing_entity,
+	    submitted_items,
+	    submitted_qty,
+	    cancelled_items,
+	    received_items,
+	    delivery_address
+    FROM
+	    evenflow_purchase_orders 
+    WHERE 
+        po_number = '{po_number}'
     """
+PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER = """
+    SELECT
+	    asin,
+	    external_id,
+	    model_number,
+	    hsn,
+	    title,
+	    window_type,
+	    expected_date,
+	    qty_requested,
+	    qty_accepted,
+	    qty_received,
+	    qty_outstanding,
+	    unit_cost,
+	    total_cost
+    FROM 
+	    evenflow_purchase_orders_line_items poli
+    JOIN 
+	    evenflow_purchase_orders po
+    ON 
+	    po.id = poli.evenflow_purchase_orders_id
+    WHERE 
+	    po.po_number = '{po_number}'
+
+    """
+
