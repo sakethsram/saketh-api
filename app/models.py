@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, TIMESTAMP, SmallInteger, Foreign
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
+from sqlalchemy.sql import func
 
 
 class User(Base):
@@ -130,7 +131,11 @@ class UserTokens(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     token = Column(String, nullable=False)
-    created_on = Column(TIMESTAMP, default=datetime.now)
+    created_on = Column(TIMESTAMP, default=func.now(), onupdate=func.now(), nullable=False)
+    created_by = Column(String, nullable=True)
+    modified_on = Column(TIMESTAMP, default=func.now(), onupdate=func.now(), nullable=False)
+    modified_by = Column(String, nullable=True)
+    active_flag = Column(SmallInteger, nullable=False, default=1)  # Add active_flag with a default value
 
     # Relationship with User
     user = relationship("User", back_populates="tokens")
