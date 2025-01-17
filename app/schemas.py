@@ -49,6 +49,7 @@ class UserTokenSchema(BaseModel):
     user_id: int
     token: str
     created_on: datetime
+    active_flag: int 
 
     class Config:
         orm_mode = True

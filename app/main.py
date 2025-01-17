@@ -1,14 +1,24 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.routers import auth, users
-from app.routers import client_onboarding
 from app.config import load_clients
 from app.logging_config import setup_logging
 import logging
 
+# Setup logging
 setup_logging()
 
 # Define the FastAPI app instance at the module level
 app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
+)
 
 # Load client configurations
 CONFIG_FILE = "app/config/clients.json"
@@ -22,6 +32,5 @@ async def startup_event():
 # Include routers
 app.include_router(auth.router)
 app.include_router(users.router)
-app.include_router(client_onboarding.router)
 
 logging.debug("Debugging initialized")
