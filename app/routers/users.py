@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 from typing import List
 from app.dependencies import get_db
@@ -8,10 +9,12 @@ from app.security import validate_token
 import logging
 
 router = APIRouter()
+security_scheme = HTTPBearer()
 
 @router.get("/users", response_model=List[UserSchema])
 def list_users(
     db: Session = Depends(get_db),
+    current_user: User = Depends(security_scheme),
     authorization: str = Header(None, description="Bearer token for authentication")
 ):
     """
