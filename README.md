@@ -70,7 +70,6 @@ app/
    - Login to PostgreSQL
    ```sh
       sudo -u postgres psql
-      jnjnuh
    ```
 
    - Create User, password, DB, and add privileges
@@ -95,6 +94,7 @@ app/
 
 4. Start the FastAPI server:
    ```bash
+   uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
    uvicorn app.main:app --reload
    uvicorn app.main:app --reload --log-level debug
    ```
@@ -153,6 +153,7 @@ psql -h 127.0.0.1 -U postgres postgres
 
 -- Creating USER
 	CREATE USER dataworkx WITH PASSWORD 'jnjnuh';
+   ALTER  USER dataworkx  WITH PASSWORD 'jnjnuh';
 
 -- Granting previleges to use on NEW DB
 	GRANT ALL PRIVILEGES ON DATABASE ecommate to dataworkx;
@@ -197,3 +198,22 @@ git commin -m "Adding client onboarding API"
 git push --set-upstream client-onboarding
 # Raise Pull Request
 ```
+
+### UI team
+#### UX Desings
+```link
+https://www.figma.com/design/tfJMS9p8oGimQAQ0nUja4r/E-commerce?node-id=1-2&p=f
+```
+#### Shared drive
+```link
+https://drive.google.com/drive/u/2/folders/1IeHBfcLX6EyobR-LVo9mmhldPRN9S7Ql
+```
+
+#### Jira Link
+https://dataecomesutra.atlassian.net/jira/software/c/projects/DEE/boards/2/backlog
+
+bedev@company.e-sutra.com (for team)
+EdZV5N]D~V#[
+
+### Slak
+https://app.slack.com/client/T0884T5KY14/C0888M5EH1B

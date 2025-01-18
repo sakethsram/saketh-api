@@ -82,8 +82,14 @@ def login(
         "client_id": user.client_id
     })
 
-    # Save the new token in the database
-    new_token_entry = UserTokens(user_id=user.id, token=access_token)
+    new_token_entry = UserTokens(
+        user_id=user.id,
+        token=access_token,
+        created_by=user.id,
+        modified_by=user.id,
+        active_flag=1,
+    )
+    
     db.add(new_token_entry)
     db.commit()
 
