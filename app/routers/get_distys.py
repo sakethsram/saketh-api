@@ -1,16 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 from typing import List
 from app.dependencies import get_db
+from app.models import User
 from app.models import DistyMaster  # Import the DistyMaster model
 from app.schemas import DistyMasterSchema  # Import the schema for DistyMaster
 from app.security import validate_token  # Assuming you have a validate_token function
 
 router = APIRouter()
+security_scheme = HTTPBearer()
 
 @router.get("/distys", response_model=List[DistyMasterSchema])
 def get_distys(
     db: Session = Depends(get_db),
+    current_user: User = Depends(security_scheme),
     authorization: str = Header(None, description="Bearer token for authentication")
 ):
     """
