@@ -51,5 +51,9 @@ class UserTokenSchema(BaseModel):
     created_on: datetime
     active_flag: int 
 
+class DistyMasterSchema(BaseModel):
+    id: int
+    name: str 
+
     class Config:
         orm_mode = True

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from app.routers import auth, users
+from app.routers import get_distys
+from fastapi.middleware.cors import CORSMiddleware
 from app.config import load_clients
 from app.logging_config import setup_logging
 import logging
@@ -32,5 +33,5 @@ async def startup_event():
 # Include routers
 app.include_router(auth.router)
 app.include_router(users.router)
-
+app.include_router(get_distys.router)
 logging.debug("Debugging initialized")
