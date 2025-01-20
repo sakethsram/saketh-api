@@ -1,0 +1,136 @@
+from fastapi import APIRouter, Depends, HTTPException, Header
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+from sqlalchemy.sql import text
+from datetime import date
+from typing import List, Optional
+from app.dependencies import get_db
+from app.security import decode_access_token
+from app.queries.customer import (
+    GET_CUSTOMER_DETAILS
+)
+from app.queries.productMaster import (
+    GET_PRODUCT_DETAILS
+)
+from app.queries.purchaseOrder import (
+    GET_PURCHASE_ORDER_DETAILS
+)
+from app.queries.accountingDetails import (
+    GET_ACCOUNTING_DETAILS
+)
+from app.queries.purchaseItemLineItem import (
+    GET_PURCHASE_ORDER_LINE_ITEM
+)
+from app.queries.invoieInput import (
+    CREATE_INVOICE_INPUT
+)
+
+router = APIRouter()
+
+# Pydantic Model for each item
+class CreateInvoiceInputRequest(BaseModel):
+    clientId: int = Field(..., description="Client Id", example=1)
+    customerMasterId: int = Field(..., description="Customer master Id", example=1)
+    poNumber: str = Field(..., description="Purchase Order Number", example="PO12345")
+    ASIN:  str = Field(..., description="ASIN", example="ASIN number")
+    sku: str = Field(..., description="SKU", example="SKU number")
+    appointmentId: int = Field(..., description="appoinment id", example=101)
+    appointmentDate: date = Field(..., description="appintment date", example="2025=01-01")
+    acceptedQty: int = Field(..., description="Accepted quantity", example=10)
+    placeOfSupply: str = Field(..., description="Place of suply", example="Bangalore")
+    totalBoxCount: int = Field(..., description="Total Box count", example=10)
+    boxNumber: str = Field(..., description="Box Numbetr", example="box number")
+    notes: str = Field(..., description="Notes", example="any comment")
+    supplierName: str = Field(..., description="Name of the supplier", example="Acme Corp.")
+    totalAmount: float = Field(..., ge=0, description="Total amount for the PO", example=1000.50)
+    startDate: date = Field(..., description="Start date of the PO in YYYY-MM-DD format")
+    endDate: Optional[date] = Field(None, description="End date of the PO in YYYY-MM-DD format")
+
+# Updated endpoint for handling an array of objects
+@router.post("/createInvoiceInput", status_code=201, summary="Create new Purchase Orders")
+def create_invoice_input(
+    requests: List[CreateInvoiceInputRequest],  # Accepts a list of objects
+    db: Session = Depends(get_db),
+    authorization: str = Header(..., description="Bearer token for authentication", example="Bearer your_token_here")
+):
+    """
+    Create new Purchase Orders from an array of input objects.
+    """
+    # Validate authorization
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    try:
+        decoded_details = decode_access_token(authorization.split(" ")[1])
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+
+    # Process each request in the input list
+    for request in requests:
+        try:
+            values = {"customer_id": request.customerMasterId}
+            GET_CUSTOMER_DETAILS_FORMATED = GET_CUSTOMER_DETAILS.format(**values)
+            customerInfo = db.execute(text(GET_CUSTOMER_DETAILS_FORMATED)).mappings().first()
+            values = {"sku": request.sku}
+            GET_PRODUCT_DETAILS_FORMATED = GET_PRODUCT_DETAILS.format(**values)
+            productInfo = db.execute(text(GET_PRODUCT_DETAILS_FORMATED)).mappings().first()
+            values = {"po_number": request.poNumber}
+            GET_PURCHASE_ORDER_DETAILS_FORMATTED = GET_PURCHASE_ORDER_DETAILS.format(**values) 
+            purchaseOrderDetails = db.execute(text(GET_PURCHASE_ORDER_DETAILS_FORMATTED)).mappings().first()
+            values = {"client_id": request.clientId}
+            GET_ACCOUNTING_DETAILS_FORMATTED = GET_ACCOUNTING_DETAILS.format(**values) 
+            accountingDetails = db.execute(text(GET_ACCOUNTING_DETAILS_FORMATTED)).mappings().first()
+            values = {'order_id': purchaseOrderDetails.evenflow_purchase_orders_id, 'sku': request.sku}
+            GET_PURCHASE_ORDER_LINE_ITEM_FORMATTED = GET_PURCHASE_ORDER_LINE_ITEM.format(**values) 
+            purchaseOrderLineItemDetails = db.execute(text(GET_PURCHASE_ORDER_LINE_ITEM_FORMATTED)).mappings().first()
+            orderedDate = purchaseOrderDetails.ordered_on
+            invoiceInputDict = {
+                'clientId': request.clientId,
+                'evenflowCustomerMasterId': request.customerMasterId,
+                'evenflowProductMasterId': productInfo.id,
+                'invoiceStatus': 'NOT_RAISED',
+                'customerName': customerInfo.customer_name,
+                'gstTreatment': customerInfo.gst_treatment,
+                'tcsTaxName': customerInfo.tax_name,
+                'tcsPercentage': customerInfo.tax_percentage,
+                'gstin': customerInfo.gst_identification_number,
+                'placeOfSupply': request.placeOfSupply,
+                'poNumber': request.poNumber,
+                'evenflowPurchaseOrdersId': purchaseOrderDetails.evenflow_purchase_orders_id,
+                'paymentTerms': customerInfo.payment_terms,
+                'paymentTermsLabel': customerInfo.payment_terms_label,
+                'expectedDate': purchaseOrderLineItemDetails.expected_date,
+                'account': productInfo.account,
+                'itemName': productInfo.item_name,
+                'sku': request.sku,
+                'itemDesc': productInfo.description,
+                'itemType': productInfo.product_type,
+                'hsnSac': productInfo.hsn_sac,
+                'quantity': purchaseOrderLineItemDetails.quantity,
+                'usageUnit': productInfo.usage_unit,
+                'itemPrice': productInfo.rate,
+                'itemTaxExemptionReason': productInfo.exemption_reason,
+                'isInclusiveTax': productInfo.is_inclusive_tax,
+                'itemTax': productInfo.intra_state_tax_name,
+                'itemTaxType': productInfo.intra_state_tax_type,
+                'itemTaxPercentage': productInfo.intra_state_tax_rate,
+                'notes': request.notes,
+                'fiscalQuarter': ((orderedDate.month - 1) // 3 + 1),
+                'poMonth': orderedDate.month,
+                'poYear': orderedDate.year,
+                'appointmentId': request.appointmentId,
+                'appointmentDate': request.appointmentDate,
+                'acceptedQty': request.acceptedQty,
+                'invoiceGeneratedAccTool': accountingDetails.accounting_tool_id,
+                'poFilePath': purchaseOrderDetails.po_file_path,
+                'boxNumber': request.boxNumber,
+                'totalBoxCount': request.totalBoxCount,
+                'activeFlag': 1,
+                'createdBy': decoded_details.get('user_login_id')
+            }
+            new_po_query = text(CREATE_INVOICE_INPUT)
+            db.execute(new_po_query, invoiceInputDict)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to create Purchase Order {request.poNumber}: {str(e)}")
+    db.commit()
+    return {"message": "Purchase Orders created successfully"}
