@@ -57,3 +57,9 @@ class DistyMasterSchema(BaseModel):
 
     class Config:
         orm_mode = True
+
+class ClientMasterSchema(BaseModel):
+    id: int
+    name: str
+    class Config:
+        orm_mode = True 
