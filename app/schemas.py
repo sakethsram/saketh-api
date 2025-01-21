@@ -51,6 +51,13 @@ class UserTokenSchema(BaseModel):
     created_on: datetime
     active_flag: int 
 
+class UploadPoSchema(BaseModel):
+    filename: str
+    file_hash: str
+    saved_path: str
+    status: str
+    extracted_data: Optional[dict] = None
+
 class DistyMasterSchema(BaseModel):
     id: int
     name: str 
