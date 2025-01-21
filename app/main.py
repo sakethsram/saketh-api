@@ -6,12 +6,32 @@ from app.config import load_clients
 from app.logging_config import setup_logging
 import logging
 from app.routers import client_onboard
+from starlette.middleware.base import BaseHTTPMiddleware
 
 # Setup logging
 setup_logging()
 
 # Define the FastAPI app instance at the module level
 app = FastAPI()
+
+class ContentSecurityPolicyMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        # Allow Swagger UI to load over HTTP
+        if request.url.path.startswith("/docs") or request.url.path.startswith("/openapi.json"):
+            response = await call_next(request)
+            response.headers[
+                "Content-Security-Policy"
+            ] = "default-src 'self' 'unsafe-inline' 'unsafe-eval' http: https:;"
+            return response
+
+        # Default policy for other routes
+        response = await call_next(request)
+        response.headers["Content-Security-Policy"] = "upgrade-insecure-requests;"
+        return response
+
+
+# Add the middleware
+app.add_middleware(ContentSecurityPolicyMiddleware)
 
 # Add CORS middleware
 app.add_middleware(
