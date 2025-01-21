@@ -12,7 +12,7 @@ from app.queries.warehouse import (
 
 router = APIRouter()
 
-@router.get("/warehouseList")
+@router.get("/getWarehouseList")
 def get_warehouse_details(
     db: Session = Depends(get_db),
     authorization: str = Header(..., description="Bearer token for authentication", example="Bearer your_token_here")
