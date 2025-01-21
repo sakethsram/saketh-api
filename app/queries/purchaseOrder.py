@@ -7,3 +7,12 @@ GET_PURCHASE_ORDER_DETAILS = """
     WHERE 
         po_number = '{po_number}'
 """
+
+UPDATE_PURCHASE_ORDER_DETAILS = """
+    UPDATE
+        evenflow_purchase_orders
+    SET 
+        po_processing_status = '{po_status}'
+    WHERE
+        po_number = '{po_number}'
+"""

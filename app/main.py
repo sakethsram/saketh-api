@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import auth, users, po, invoiceInput
+from app.routers import auth, users, po, invoiceInput, warehouse
 from app.config import load_clients
 from app.logging_config import setup_logging
 import logging
@@ -23,5 +23,6 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(po.router)
 app.include_router(invoiceInput.router)
+app.include_router(warehouse.router)
 
 logging.debug("Debugging initialized")

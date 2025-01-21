@@ -13,13 +13,15 @@ from app.queries.productMaster import (
     GET_PRODUCT_DETAILS
 )
 from app.queries.purchaseOrder import (
-    GET_PURCHASE_ORDER_DETAILS
+    GET_PURCHASE_ORDER_DETAILS,
+    UPDATE_PURCHASE_ORDER_DETAILS
 )
 from app.queries.accountingDetails import (
     GET_ACCOUNTING_DETAILS
 )
 from app.queries.purchaseItemLineItem import (
-    GET_PURCHASE_ORDER_LINE_ITEM
+    GET_PURCHASE_ORDER_LINE_ITEM,
+    UPDATE_PURCHASE_ORDER_LINE_ITEM
 )
 from app.queries.invoieInput import (
     CREATE_INVOICE_INPUT
@@ -47,7 +49,7 @@ class CreateInvoiceInputRequest(BaseModel):
     endDate: Optional[date] = Field(None, description="End date of the PO in YYYY-MM-DD format")
 
 # Updated endpoint for handling an array of objects
-@router.post("/createInvoiceInput", status_code=201, summary="Create new Purchase Orders")
+@router.post("/generateInvoiceInputs", status_code=201, summary="Create new Purchase Orders")
 def create_invoice_input(
     requests: List[CreateInvoiceInputRequest],  # Accepts a list of objects
     db: Session = Depends(get_db),
@@ -65,9 +67,12 @@ def create_invoice_input(
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
 
+    allOrderQtySatisfiedFlag = "FULFILLED"
+    purchaseOrderNumber = ""
     # Process each request in the input list
-    for request in requests:
-        try:
+    try:
+        for request in requests:
+            purchaseOrderNumber = request.poNumber
             values = {"customer_id": request.customerMasterId}
             GET_CUSTOMER_DETAILS_FORMATED = GET_CUSTOMER_DETAILS.format(**values)
             customerInfo = db.execute(text(GET_CUSTOMER_DETAILS_FORMATED)).mappings().first()
@@ -84,6 +89,12 @@ def create_invoice_input(
             GET_PURCHASE_ORDER_LINE_ITEM_FORMATTED = GET_PURCHASE_ORDER_LINE_ITEM.format(**values) 
             purchaseOrderLineItemDetails = db.execute(text(GET_PURCHASE_ORDER_LINE_ITEM_FORMATTED)).mappings().first()
             orderedDate = purchaseOrderDetails.ordered_on
+
+            lineItemQtySatisfy = 'FULFILLED'
+            if request.acceptedQty != purchaseOrderLineItemDetails.quantity:
+                lineItemQtySatisfy = "PARTIALLY_FULFILLED"
+                allOrderQtySatisfiedFlag = "PARTIALLY_FULFILLED"
+
             invoiceInputDict = {
                 'clientId': request.clientId,
                 'evenflowCustomerMasterId': request.customerMasterId,
@@ -130,7 +141,19 @@ def create_invoice_input(
             }
             new_po_query = text(CREATE_INVOICE_INPUT)
             db.execute(new_po_query, invoiceInputDict)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to create Purchase Order {request.poNumber}: {str(e)}")
-    db.commit()
-    return {"message": "Purchase Orders created successfully"}
+
+            values = {'purchase_orders_id': purchaseOrderDetails.evenflow_purchase_orders_id, 'sku': request.sku, 'po_status': lineItemQtySatisfy}
+            UPDATE_PURCHASE_ORDER_LINE_ITEM_FORMATTED = UPDATE_PURCHASE_ORDER_LINE_ITEM.format(**values)
+            print(UPDATE_PURCHASE_ORDER_LINE_ITEM_FORMATTED)
+            db.execute(text(UPDATE_PURCHASE_ORDER_LINE_ITEM_FORMATTED))
+
+        values = { 'po_number': purchaseOrderNumber, 'po_status': allOrderQtySatisfiedFlag }
+        UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED = UPDATE_PURCHASE_ORDER_DETAILS.format(**values)
+        print(UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED)
+        db.execute(text(UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED))
+        db.commit()
+        return {"message": "Purchase Orders created successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create Purchase Order {request.poNumber}: {str(e)}")
+
+    
