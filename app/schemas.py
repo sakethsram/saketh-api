@@ -55,5 +55,17 @@ class DistyMasterSchema(BaseModel):
     id: int
     name: str 
 
+class EvenFlowAccountingDetailsSchema(BaseModel):
+    id: int
+    client_id: int
+    invoice_inputs: str
+    invoice_number_auto: int
+    accounting_tool_name: str
+    accounting_tool_url: str
+    accounting_tool_userid: str
+    active_flag: int
+
     class Config:
-        orm_mode = True
+        orm_mode = True  # Enables ORM compatibility
+        from_attributes = True  # Required for from_orm
+
