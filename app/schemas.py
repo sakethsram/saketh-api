@@ -62,5 +62,13 @@ class DistyMasterSchema(BaseModel):
     id: int
     name: str 
 
+class ClientMasterSchema(BaseModel):
+    id: int
+    name: str
     class Config:
-        orm_mode = True
+        orm_mode = True 
+
+class AccountingDetailsSchema(BaseModel):
+    id: int
+    name: str
+
