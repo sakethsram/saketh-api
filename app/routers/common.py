@@ -36,11 +36,11 @@ def handle_po_file(db: Session, file: UploadFile, client_name: str, hash: str):
         raise HTTPException(status_code=400, detail="File must have a valid extension.")
     
     file_name = f"purchase_order_{utc_timestamp}{file_extension}"
-    # TODO: Show the example filename with path
+    # e_commerce_platform/purchase_orders/evenflow/purchase_orders/22-01-2025/purchase_order_133836.pdf
     file_path = get_file_path(po_folder, client_name, po_folder, file_name)
 
     # Ensure PO Mappings folder exists
-    # TODO: Show the example filename with path
+    # e_commerce_platform/purchase_orders/evenflow/po_mappings/22-01-2025/purchase_order_133836.pdf
     po_mappings = os.path.join(base_folder, po_folder, client_name, po_mapping)
     ensure_directory_exists(po_mappings)
 
@@ -74,10 +74,10 @@ def handle_im_file(db: Session, file: UploadFile, client_name: str, hash: str):
         raise HTTPException(status_code=400, detail="File must have a valid extension.")
     
     file_name = f"item_master_{utc_timestamp}{file_extension}"
-    # TODO: Show the example filename with path
+    # e_commerce_platform/item_master/evenflow/item_master/22-01-2025/item_master_134245.pdf
     file_path = get_file_path(im_folder, client_name, im_folder, file_name)
 
-    # TODO: Show the example filename with path
+    # e_commerce_platform/item_master/evenflow/item_master_mappings/22-01-2025/item_master_134245.pdf
     item_master_mappings = os.path.join(base_folder, im_folder, client_name, im_mapping)
     ensure_directory_exists(item_master_mappings)
 
@@ -111,11 +111,11 @@ def handle_cm_file(db: Session, file: UploadFile, client_name: str, hash: str):
         raise HTTPException(status_code=400, detail="File must have a valid extension.")
     
     file_name = f"customer_master_{utc_timestamp}{file_extension}"
-    # TODO: Show the example filename with path
+    # e_commerce_platform/customer_master/evenflow/customer_master_mappings/22-01-2025/customer_master_134439.pdf
     file_path = get_file_path(cm_folder, client_name, cm_folder, file_name)
 
     # Ensure Customer Master Mappings folder exists
-    # TODO: Show the example filename with path
+    # e_commerce_platform/customer_master/evenflow/customer_master/22-01-2025/customer_master_134439.pdf
     customer_master_mappings = os.path.join(base_folder, cm_folder, client_name, cm_mapping)
     ensure_directory_exists(customer_master_mappings)
 
