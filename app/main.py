@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from app.routers import auth, users
 from app.routers import get_distys
+from app.routers import common
 from app.routers import client_onboard
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import load_clients
@@ -57,4 +58,5 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(get_distys.router)
 app.include_router(client_onboard.router)
+app.include_router(common.router)
 logging.debug("Debugging initialized")
