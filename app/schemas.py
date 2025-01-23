@@ -56,7 +56,8 @@ class UploadPoSchema(BaseModel):
     file_hash: str
     saved_path: str
     status: str
-    extracted_data: Optional[dict] = None
+    extracted_data: Optional[List[dict]] = None
+
 
 class DistyMasterSchema(BaseModel):
     id: int
