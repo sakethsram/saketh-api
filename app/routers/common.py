@@ -111,11 +111,11 @@ def handle_cm_file(db: Session, file: UploadFile, client_name: str, hash: str):
         raise HTTPException(status_code=400, detail="File must have a valid extension.")
     
     file_name = f"customer_master_{utc_timestamp}{file_extension}"
-    # e_commerce_platform/customer_master/evenflow/customer_master_mappings/22-01-2025/customer_master_134439.pdf
+    # e_commerce_platform/customer_master/evenflow/customer_master/22-01-2025/customer_master_134439.pdf
     file_path = get_file_path(cm_folder, client_name, cm_folder, file_name)
 
     # Ensure Customer Master Mappings folder exists
-    # e_commerce_platform/customer_master/evenflow/customer_master/22-01-2025/customer_master_134439.pdf
+    # e_commerce_platform/customer_master/evenflow/customer_master_mappings/22-01-2025/customer_master_134439.pdf
     customer_master_mappings = os.path.join(base_folder, cm_folder, client_name, cm_mapping)
     ensure_directory_exists(customer_master_mappings)
 
