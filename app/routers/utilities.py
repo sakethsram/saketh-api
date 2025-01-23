@@ -1,7 +1,9 @@
 from fastapi import UploadFile
 import os
+import json
 import shutil
 import hashlib
+import pandas as pd
 from datetime import datetime
 from app.config.config import settings
 
@@ -31,54 +33,33 @@ def save_file(file: UploadFile, file_path: str):
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-import json
-
-def po_to_json(file_path):
-    """
-    Simulates the processing of a file and returns sample JSON data.
-    Args:
-        file_path (str): Path to the file.
-    Returns:
-        dict: Sample JSON data.
-    """
-    # Sample JSON data (replace this with the actual logic later)
-    sample_json_data = [
-  {
-    "SourceField": "PO",
-    "TargetField": "po_number",
-    "SampleValue": "7VTEZRNB"
-  },
-  {
-    "SourceField": "Status",
-    "TargetField": "po_status",
-    "SampleValue": "Closed"
-  },
-  {
-    "SourceField": "Vendor",
-    "TargetField": "vendor",
-    "SampleValue": "EV7CR"
-  },
-  {
-    "SourceField": "Ship to Location",
-    "TargetField": "ship_to_location",
-    "SampleValue": "BLR4 - BENGALURU, KARNATAKA"
-  },
-  {
-    "SourceField": "Ordered On",
-    "TargetField": "ordered_on",
-    "SampleValue": "11/20/2024"
-  },
-  {
-    "SourceField": "Ship window",
-    "TargetField": "ship_window_from",
-    "SampleValue": "45617"
-  },
-  {
-    "SourceField": "Ship window",
-    "TargetField": "ship_window_to",
-    "SampleValue": "45658"
-  }
-]
+def convert_xlsx_to_json(page_id):
+    # Mapping between page IDs and corresponding file names
+    page_to_file_mapping = {
+        "po_page": "po-mapping.xlsx",
+        "item_master_page": "itemmaster-mapping.xlsx",
+        "customer_master_page": "custmaster-mapping.xlsx"
+    }
     
-    return sample_json_data
+    # Directory where the mappings are stored
+    base_dir = "app/routers/data"
+
+    # Check if the page_id exists in the mapping
+    if page_id not in page_to_file_mapping:
+        raise ValueError(f"Invalid page_id '{page_id}'. Supported pages are: {list(page_to_file_mapping.keys())}")
+    
+    # Construct the file path
+    xlsx_file = os.path.join(base_dir, page_to_file_mapping[page_id])
+    
+    # Verify if the file exists
+    if not os.path.exists(xlsx_file):
+        raise FileNotFoundError(f"File '{xlsx_file}' does not exist.")
+    
+    # Read the Excel file and convert to JSON
+    try:
+        df = pd.read_excel(xlsx_file)
+        json_data = df.to_dict(orient='records')
+        return json_data
+    except Exception as e:
+        raise RuntimeError(f"Error processing file '{xlsx_file}': {str(e)}")
 
