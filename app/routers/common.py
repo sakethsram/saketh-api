@@ -8,7 +8,7 @@ from app.models import User
 from app.schemas import UploadPoSchema
 from app.security import validate_token
 from app.dependencies import get_db
-from app.routers.utilities import convert_xlsx_to_json
+from app.routers.utilities import po_to_json
 from app.routers.utilities import ensure_directory_exists
 from app.routers.utilities import calculate_sha256
 from app.routers.utilities import get_file_path
@@ -28,7 +28,7 @@ cm_folder = settings.customer_master_folder
 cm_mapping = settings.customer_master_mappings_folder
 
 # Handle Purchase Orders
-def handle_po_file(db: Session, file: UploadFile, client_name: str, hash: str, page_id: str):
+def handle_po_file(db: Session, file: UploadFile, client_name: str, hash: str):
     """Handle Purchase Order files."""
     utc_timestamp = datetime.now().strftime("%H%M%S")
     file_extension = os.path.splitext(file.filename)[1]
@@ -53,7 +53,7 @@ def handle_po_file(db: Session, file: UploadFile, client_name: str, hash: str, p
 
     # Process the file using the automation script (PO)
     try:
-        extracted_data = convert_xlsx_to_json(page_id)
+        extracted_data = po_to_json(file_path)
     except Exception as e:
         os.remove(file_path)
         raise HTTPException(status_code=500, detail=f"File processing failed: {str(e)}")
@@ -67,7 +67,7 @@ def handle_po_file(db: Session, file: UploadFile, client_name: str, hash: str, p
     }
 
 # Handle Item Master files
-def handle_im_file(db: Session, file: UploadFile, client_name: str, hash: str, page_id: str):
+def handle_im_file(db: Session, file: UploadFile, client_name: str, hash: str):
     utc_timestamp = datetime.now().strftime("%H%M%S")
     file_extension = os.path.splitext(file.filename)[1]
     if not file_extension:
@@ -89,7 +89,7 @@ def handle_im_file(db: Session, file: UploadFile, client_name: str, hash: str, p
 
     # Process the file using the automation script (Item Master)
     try:
-        extracted_data = convert_xlsx_to_json(page_id)
+        extracted_data = po_to_json(file_path)
     except Exception as e:
         os.remove(file_path)
         raise HTTPException(status_code=500, detail=f"File processing failed: {str(e)}")
@@ -103,7 +103,7 @@ def handle_im_file(db: Session, file: UploadFile, client_name: str, hash: str, p
     }
 
 # Handle Customer Master files
-def handle_cm_file(db: Session, file: UploadFile, client_name: str, hash: str, page_id: str):
+def handle_cm_file(db: Session, file: UploadFile, client_name: str, hash: str):
     """Handle Customer Master files."""
     utc_timestamp = datetime.now().strftime("%H%M%S")
     file_extension = os.path.splitext(file.filename)[1]
@@ -128,7 +128,7 @@ def handle_cm_file(db: Session, file: UploadFile, client_name: str, hash: str, p
 
     # Process the file using the automation script (Customer Master)
     try:
-        extracted_data = convert_xlsx_to_json(page_id)
+        extracted_data = po_to_json(file_path)
     except Exception as e:
         os.remove(file_path)
         raise HTTPException(status_code=500, detail=f"File processing failed: {str(e)}")
@@ -173,4 +173,4 @@ def upload(
     if page_id not in handle_file_upload:
         raise HTTPException(status_code=400, detail="Invalid page_id.")
 
-    return handle_file_upload[page_id](db, file, client_name, hash, page_id)
+    return handle_file_upload[page_id](db, file, client_name, hash)

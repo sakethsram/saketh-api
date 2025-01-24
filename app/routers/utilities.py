@@ -1,9 +1,7 @@
 from fastapi import UploadFile
 import os
-import json
 import shutil
 import hashlib
-import pandas as pd
 from datetime import datetime
 from app.config.config import settings
 
@@ -32,7 +30,7 @@ def save_file(file: UploadFile, file_path: str):
     """Save the uploaded file to the specified path."""
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-
+     
 def convert_xlsx_to_json(page_id):
     # Mapping between page IDs and corresponding file names
     page_to_file_mapping = {
@@ -63,4 +61,3 @@ def convert_xlsx_to_json(page_id):
         return json_data
     except Exception as e:
         raise RuntimeError(f"Error processing file '{xlsx_file}': {str(e)}")
-
