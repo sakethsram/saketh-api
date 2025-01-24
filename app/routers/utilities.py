@@ -58,6 +58,7 @@ def convert_xlsx_to_json(page_id):
     # Read the Excel file and convert to JSON
     try:
         df = pd.read_excel(xlsx_file)
+        df = df.fillna(value='-')
         json_data = df.to_dict(orient='records')
         return json_data
     except Exception as e:
