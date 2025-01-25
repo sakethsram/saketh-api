@@ -39,7 +39,7 @@ class CreateInvoiceInputRequest(BaseModel):
     appointmentId: int = Field(..., description="appoinment id", example=101)
     appointmentDate: date = Field(..., description="appintment date", example="2025=01-01")
     acceptedQty: int = Field(..., description="Accepted quantity", example=10)
-    placeOfSupply: str = Field(..., description="Place of suply", example="Bangalore")
+    placeOfSupply: Optional[str] = Field(None, description="Place of suply", example="Bangalore")
     totalBoxCount: int = Field(..., description="Total Box count", example=10)
     boxNumber: str = Field(..., description="Box Numbetr", example="box number")
     notes: str = Field(..., description="Notes", example="any comment")
@@ -47,6 +47,14 @@ class CreateInvoiceInputRequest(BaseModel):
     totalAmount: float = Field(..., ge=0, description="Total amount for the PO", example=1000.50)
     startDate: date = Field(..., description="Start date of the PO in YYYY-MM-DD format")
     endDate: Optional[date] = Field(None, description="End date of the PO in YYYY-MM-DD format")
+
+    otherWarehouseName: Optional[str] = Field(None, description="Other Warehouse Name", example="xyz")
+    otherWarehouseAddressLine1: Optional[str] = Field(None, description="Other Warehouse AddressLine1", example="xyz")
+    otherWarehouseAddressLine2: Optional[str] = Field(None, description="Other Warehouse AddressLine2", example="xyz")
+    otherWarehouseCity: Optional[str] = Field(None, description="other Warehouse City", example="xyz")
+    otherWarehouseState: Optional[str] = Field(None, description="other Warehouse State", example="xyz")
+    otherWarehouseCountry: Optional[str] = Field(None, description="other Warehouse Country", example="xyz")
+    otherWarehousePostalCode: Optional[str] = Field(None, description="other Warehouse Postal Code", example="xyz")
 
 # Updated endpoint for handling an array of objects
 @router.post("/generateInvoiceInputs", status_code=201, summary="Create new Purchase Orders")
@@ -137,7 +145,14 @@ def create_invoice_input(
                 'boxNumber': request.boxNumber,
                 'totalBoxCount': request.totalBoxCount,
                 'activeFlag': 1,
-                'createdBy': decoded_details.get('user_login_id')
+                'createdBy': decoded_details.get('user_login_id'),
+                'otherWarehouseName': request.otherWarehouseName,
+                'otherWarehouseAddressLine1': request.otherWarehouseAddressLine1,
+                'otherWarehouseAddressLine2': request.otherWarehouseAddressLine2,
+                'otherWarehouseCity': request.otherWarehouseCity,
+                'otherWarehouseState': request.otherWarehouseState,
+                'otherWarehouseCountry': request.otherWarehouseCountry,
+                'otherWarehousePostalCode': request.otherWarehousePostalCode
             }
             new_po_query = text(CREATE_INVOICE_INPUT)
             db.execute(new_po_query, invoiceInputDict)
@@ -152,8 +167,9 @@ def create_invoice_input(
         print(UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED)
         db.execute(text(UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED))
         db.commit()
-        return {"message": "Purchase Orders created successfully"}
+        return {"message": "Invoice created successfully"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create Purchase Order {request.poNumber}: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to create invoice Order {request.poNumber}: {str(e)}")
 
     

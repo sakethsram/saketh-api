@@ -11,7 +11,10 @@ CREATE_INVOICE_INPUT = """
             item_tax_percentage, notes,  fiscal_quarter, po_month, 
             po_year, appointment_id, appointment_date, accepted_qty, 
             invoice_generated_acc_tool, po_file_path,  box_number, total_box_count, 
-            active_flag, created_by
+            active_flag, created_by, other_warehouse_name, other_warehouse_address_line_1,
+            other_warehouse_address_line_2, other_warehouse_city, other_warehouse_state, other_warehouse_country,
+            other_warehouse_postal_code
+
 	    )
 	    VALUES (
 		    :clientId, :evenflowCustomerMasterId, :evenflowProductMasterId, :invoiceStatus,
@@ -24,6 +27,8 @@ CREATE_INVOICE_INPUT = """
             :itemTaxPercentage, :notes, :fiscalQuarter, :poMonth, 
             :poYear, :appointmentId, :appointmentDate, :acceptedQty, 
             :invoiceGeneratedAccTool, :poFilePath, :boxNumber, :totalBoxCount, 
-            :activeFlag, :createdBy
+            :activeFlag, :createdBy, :otherWarehouseName, :otherWarehouseAddressLine1,
+            :otherWarehouseAddressLine2, :otherWarehouseCity, :otherWarehouseState, :otherWarehouseCountry,
+            :otherWarehousePostalCode
 	)
 """
