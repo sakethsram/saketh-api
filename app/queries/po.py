@@ -156,15 +156,50 @@ PO_DETAILS_QUERY_BY_PO_NUMBER = """
 	    purchasing_entity,
 	    submitted_items,
 	    submitted_qty,
+        submitted_total_cost,
+        accepted_items,
+        accepted_qty,
+        accepted_total_cost,
+        received_items,
+        received_qty,
+        received_total_cost,
 	    cancelled_items,
-	    received_items,
+        cancelled_qty,
+        cancelled_total_cost,
 	    delivery_address
     FROM
 	    evenflow_purchase_orders 
     WHERE 
         po_number = '{po_number}'
     """
-PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER = """
+PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER_WITHOUT_FULFILLED = """
+    SELECT
+	    asin,
+	    external_id,
+	    model_number,
+	    hsn,
+	    title,
+	    window_type,
+	    expected_date,
+	    qty_requested,
+	    qty_accepted,
+	    qty_received,
+	    qty_outstanding,
+	    unit_cost,
+	    total_cost
+    FROM 
+	    evenflow_purchase_orders_line_items poli
+    JOIN 
+	    evenflow_purchase_orders po
+    ON 
+	    po.id = poli.evenflow_purchase_orders_id
+    WHERE 
+	    po.po_number = '{po_number}' and
+        poli.po_line_item_processing_status != 'FULFILLED'
+
+    """
+
+PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER_WITH_FULFILLED = """
     SELECT
 	    asin,
 	    external_id,
@@ -189,4 +224,3 @@ PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER = """
 	    po.po_number = '{po_number}'
 
     """
-

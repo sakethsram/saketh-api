@@ -11,7 +11,8 @@ from app.queries.po import (
     FETCH_PO_LISTING_QUERY,
     FETCH_TOTAL_COUNT_PO_LISTING_QUERY,
     PO_DETAILS_QUERY_BY_PO_NUMBER,
-    PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER,
+    PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER_WITHOUT_FULFILLED,
+    PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER_WITH_FULFILLED
 )
 from app.queries.purchaseOrder import (
     INSERT_PURCHASE_ORDER_DETAILS,
@@ -124,10 +125,10 @@ def list_po(
         "poRecords": result,
     }
 
-
 @router.get("/poDetailsByPoNumber")
 def get_po_details(
     poNumber: str = Query(..., description="PO Number to fetch details"),
+    fulfilledItemRequired: int = Query(..., description="Completed Item Required to fetch details"),
     db: Session = Depends(get_db),
     authorization: str = Header(..., description="Bearer token for authentication", example="Bearer your_token_here")
 ):
@@ -144,7 +145,11 @@ def get_po_details(
     
     values = {"po_number": poNumber}
     poDetailsQuery = PO_DETAILS_QUERY_BY_PO_NUMBER.format(**values)
-    poLineItemDetailsQuery = PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER.format(**values)
+    poLineItemDetailsQuery = ""
+    if fulfilledItemRequired == 1:
+        poLineItemDetailsQuery = PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER_WITHOUT_FULFILLED.format(**values)
+    else:
+        poLineItemDetailsQuery = PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER_WITH_FULFILLED.format(**values)
 
     try:
         poDetails = db.execute(text(poDetailsQuery)).mappings().first()

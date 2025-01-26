@@ -102,7 +102,15 @@ def create_invoice_input(
             if request.acceptedQty != purchaseOrderLineItemDetails.quantity:
                 lineItemQtySatisfy = "PARTIALLY_FULFILLED"
                 allOrderQtySatisfiedFlag = "PARTIALLY_FULFILLED"
-
+            orderedFiscalQuarter = ''
+            if 4 <= orderedDate.month <= 6:
+                orderedFiscalQuarter = "Q1"
+            elif 7 <= orderedDate.month <= 9:
+                orderedFiscalQuarter = "Q2"
+            elif 10 <= orderedDate.month <= 12:
+                orderedFiscalQuarter = "Q3"
+            else:  # January to March
+                orderedFiscalQuarter = "Q4"
             invoiceInputDict = {
                 'clientId': request.clientId,
                 'evenflowCustomerMasterId': request.customerMasterId,
@@ -134,7 +142,7 @@ def create_invoice_input(
                 'itemTaxType': productInfo.intra_state_tax_type,
                 'itemTaxPercentage': productInfo.intra_state_tax_rate,
                 'notes': request.notes,
-                'fiscalQuarter': ((orderedDate.month - 1) // 3 + 1),
+                'fiscalQuarter': orderedFiscalQuarter,
                 'poMonth': orderedDate.month,
                 'poYear': orderedDate.year,
                 'appointmentId': request.appointmentId,
@@ -167,7 +175,7 @@ def create_invoice_input(
         print(UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED)
         db.execute(text(UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED))
         db.commit()
-        return {"message": "Invoice created successfully"}
+        return {"message": "Invoice line item created successfully"}
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to create invoice Order {request.poNumber}: {str(e)}")
