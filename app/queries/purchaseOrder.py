@@ -5,7 +5,8 @@ GET_PURCHASE_ORDER_DETAILS = """
     FROM 
         evenflow_purchase_orders 
     WHERE 
-        po_number = '{po_number}'
+        po_number = '{po_number}' and
+        active_flag = 1
 """
 
 CHECK_PURCHASE_ORDER_EXIST = """
@@ -14,7 +15,8 @@ CHECK_PURCHASE_ORDER_EXIST = """
     FROM 
         evenflow_purchase_orders 
     WHERE 
-        po_number = '{po_number}'
+        po_number = '{po_number}' and
+        active_flag = 1
 """
 
 UPDATE_PURCHASE_ORDER_DETAILS = """
@@ -23,7 +25,8 @@ UPDATE_PURCHASE_ORDER_DETAILS = """
     SET 
         po_processing_status = '{po_status}'
     WHERE
-        po_number = '{po_number}'
+        po_number = '{po_number}' and
+        active_flag = 1
 """
 
 INSERT_PURCHASE_ORDER_DETAILS = """
@@ -37,7 +40,7 @@ INSERT_PURCHASE_ORDER_DETAILS = """
             accepted_total_cost, cancelled_items, cancelled_qty, cancelled_total_cost,
             received_items, received_qty, received_total_cost, delivery_address_to,
             delivery_address, fiscal_quarter, po_month, po_year,
-            active_flag, created_by
+            active_flag, created_by, po_processing_status
         )
         VALUES (
             :clientId, :evenflowCustomerMasterId, :toalRequestedItems,
@@ -48,7 +51,7 @@ INSERT_PURCHASE_ORDER_DETAILS = """
             :acceptedTotalCost, :cancelledItems, :cancelledQty, :cancelledTotalCost,
             :receivedItems, :receivedQty, :receivedTotalCost, :deliveryAddressTo,
             :deliveryAddress, :fiscalQuarter, :poMonth, :poYear,
-            :activeFlag, :createdBy
+            :activeFlag, :createdBy, 'OPEN'
         )
 """
 

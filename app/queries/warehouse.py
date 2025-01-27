@@ -3,4 +3,6 @@ GET_WAREHOUSE_DETAILS = """
         warehouse_id, warehouse_name
     FROM
         evenflow_warehouses
+    WHERE
+        active_flag = 1
 """

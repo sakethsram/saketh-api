@@ -4,5 +4,6 @@ GET_ACCOUNTING_DETAILS = """
     FROM 
         evenflow_accounting_details
     WHERE
-        client_id = '{client_id}'
+        client_id = '{client_id}' and
+        active_flag = 1
 """

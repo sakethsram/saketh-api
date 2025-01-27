@@ -1,4 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Header, Query
+import os
+from dotenv import load_dotenv
+import shutil
+import boto3
+from io import BytesIO
+from fastapi import APIRouter, Depends, HTTPException, Header, Query, File, UploadFile, Form
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
@@ -7,6 +12,7 @@ from datetime import datetime
 from typing import List, Optional
 from app.dependencies import get_db
 from app.security import decode_access_token
+from app.automationscript.poAutomation import extractData
 from app.queries.po import (
     FETCH_PO_LISTING_QUERY,
     FETCH_TOTAL_COUNT_PO_LISTING_QUERY,
@@ -22,6 +28,7 @@ from app.queries.purchaseItemLineItem import (
     INSERT_PURCHASE_ORDER_LINE_ITEM
 )
 
+load_dotenv()
 router = APIRouter()
 
 class CreateInvoiceInputRequest(BaseModel):
@@ -162,7 +169,7 @@ def get_po_details(
         "poLineItemDetails": poLineItemDetails,
     }
 
-@router.post("/generatePoDetails")
+@router.post("/generatePoDetails", status_code=201, summary="Create new Purchase Orders") 
 def generate_po_details(
     request: CreatePORequest,  # Accepts a list of objects
     db: Session = Depends(get_db),
@@ -276,4 +283,165 @@ def generate_po_details(
         db.rollback()
         raise HTTPException(status_code=500, detail="Something went wrong. Please try again.")
 
+@router.post("/uploadPo", status_code=200, summary="Upload Purchase Orders pdf file")
+async def generate_po_details(
+    authorization: str = Header(..., description="Bearer token for authentication", example="Bearer your_token_here"),
+    file: UploadFile = File(...),
+    clientId: str = Form(...), 
+    customerMasterId: str = Form(...),  
+    db: Session = Depends(get_db)
+):
+    """
+    Insert po details and po line Item details and upload to S3.
+    """
+    # Validate the authorization header
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=403, detail="Invalid Authorization header format")
     
+    try:
+        decoded_details = decode_access_token(authorization.split(" ")[1])
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+    
+    # Validate file type
+    if file.content_type != 'application/pdf':
+        raise HTTPException(status_code=400, detail="Only PDF files are allowed")
+
+    FOLDER_PATH = os.getenv("UPLOAD_FOLDER")
+    if not os.path.exists(FOLDER_PATH):
+        os.makedirs(FOLDER_PATH)
+    file_location = os.path.join(FOLDER_PATH, file.filename)
+    try:
+        # Save the file to a local directory
+        with open(file_location, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving file: {str(e)}")
+    
+    poData = extractData(file_location)
+    os.remove(file_location)
+    poNumber = poData.get('po_number')
+    try:
+        buffer = BytesIO(await file.read()) 
+        AWS_BUCKET_NAME = os.getenv("AWS_BUCKET_NAME")
+        AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY")
+        AWS_SECRET_KEY = os.getenv("AWS_SECRET_KEY")
+        AWS_REGION = os.getenv("AWS_REGION")
+        
+        session = boto3.Session(
+            aws_access_key_id=AWS_ACCESS_KEY,
+            aws_secret_access_key=AWS_SECRET_KEY,
+            region_name=AWS_REGION
+        )
+        s3 = session.client('s3')
+
+        currentDate = datetime.now() 
+        response = s3.put_object(
+            Bucket=AWS_BUCKET_NAME,
+            Key=f"evenflow/puchase-orders/"+currentDate.strftime('%Y-%m-%d')+"/evenflow-"+poNumber+"-"+str(currentDate)+".pdf", 
+            Body=buffer,  
+            ContentType=file.content_type, 
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error uploading file to S3: {str(e)}")
+    
+    toalRequestedItems = 0
+    for lineItem in poData.get("po_line_items"):
+        toalRequestedItems = toalRequestedItems + int(lineItem.get('quantity_requested'))
+    try:
+        values = {"po_number": poData.get('po_number')}
+        poDetailsQuery = CHECK_PURCHASE_ORDER_EXIST.format(**values)
+        poDetails = db.execute(text(poDetailsQuery)).mappings().all()
+        if poDetails:
+            raise HTTPException(status_code=409, detail="PO Number already exist")
+
+        formattedOrderedOn = datetime.strptime(poData.get('ordered_on'), "%m/%d/%Y").date()
+        orderedOnMonth = formattedOrderedOn.month
+        orderedOnYear = formattedOrderedOn.year
+        orderedFiscalQuarter = ''
+        if 4 <= orderedOnMonth <= 6:
+            orderedFiscalQuarter = "Q1"
+        elif 7 <= orderedOnMonth <= 9:
+            orderedFiscalQuarter = "Q2"
+        elif 10 <= orderedOnMonth <= 12:
+            orderedFiscalQuarter = "Q3"
+        else:  # January to March
+            orderedFiscalQuarter = "Q4"
+
+        shipWindowStartDate, shipWindowEndDate = poData.get('ship_window').split(" - ")
+        formattedShipWindowStartDate = datetime.strptime(shipWindowStartDate, "%d/%m/%Y").date().strftime("%Y-%m-%d")
+        formattedShipWindowEndDate = datetime.strptime(shipWindowEndDate, "%d/%m/%Y").date().strftime("%Y-%m-%d")
+
+        poDetailsInputDict = {
+            'clientId': clientId,
+            'evenflowCustomerMasterId': customerMasterId,
+            'toalRequestedItems': toalRequestedItems,
+            'poNumber': poData.get('po_number'),
+            'poStatus': poData.get('status'),
+            'vendor': poData.get('vendor'),
+            'shipToLocation': poData.get('ship_to_location'),
+            'orderedOn': formattedOrderedOn.strftime("%Y-%m-%d"),
+            'shipWindowFrom': formattedShipWindowStartDate,
+            'shipWindowTo': formattedShipWindowEndDate,
+            'freightTerms': poData.get('freight_terms'),
+            'paymentMethod': poData.get('payment_method'),
+            'paymentTerms': poData.get('payment_terms'),
+            'purchasingEntity': poData.get('purchasing_entity'),
+            'submittedItems': poData.get('submitted_items'),
+            'submittedQty': poData.get('submitted_quantity_submitted'),
+            'submittedTotalCost': float(poData.get('submitted_total_cost').replace("INR", "").strip()),
+            'acceptedItems': poData.get('accepted_items'),
+            'acceptedQty': poData.get('accepted_quantity_submitted'),
+            'acceptedTotalCost': float(poData.get('accepted_total_cost').replace("INR", "").strip()),
+            'cancelledItems': poData.get('cancelled_items'),
+            'cancelledQty': poData.get('cancelled_quantity_submitted'),
+            'cancelledTotalCost': float(poData.get('cancelled_total_cost').replace("INR", "").strip()),
+            'receivedItems': poData.get('received_items'),
+            'receivedQty': poData.get('received_quantity_submitted'),
+            'receivedTotalCost': float(poData.get('received_total_cost').replace("INR", "").strip()),
+            'deliveryAddressTo': poData.get('delivery_address_code'),
+            'deliveryAddress': poData.get('delivery_address'),
+            'fiscalQuarter': orderedFiscalQuarter,
+            'poMonth': orderedOnMonth,
+            'poYear': orderedOnYear,
+            'activeFlag': 1,
+            'createdBy': decoded_details.get('user_login_id')
+        }
+        generate_po_query = text(INSERT_PURCHASE_ORDER_DETAILS)
+        db.execute(generate_po_query, poDetailsInputDict)
+        poDetails = db.execute(text(poDetailsQuery)).mappings().first()
+
+        for lineItem in poData.get('po_line_items'):
+            expectedDateFormatted = datetime.strptime(lineItem.get('expected_date'), "%m/%d/%Y").date().strftime("%Y-%m-%d")
+            poLineItemDetailsInputDict = {
+                'evenflowPurchaseOrdersId': poDetails.id,
+                'asin': lineItem.get('asin'),
+                'externalId': lineItem.get('external_id'),
+                'modelNumber': lineItem.get('model_number'),
+                'hsn': 0 if lineItem.get('hsn') == "" else lineItem.get('hsn'),
+                'title': lineItem.get('title'),
+                'windowType': lineItem.get('window_type'),
+                'expectedDate': expectedDateFormatted,
+                'qtyRequested': lineItem.get('quantity_requested'),
+                'qtyAccepted': lineItem.get('accepted_quantity'),
+                'qtyReceived': lineItem.get('quantity_received'),
+                'qtyOutstanding': lineItem.get('quantity_outstanding'),
+                'unitCost': float(lineItem.get('unit_cost').replace("INR", "").strip()),
+                'totalCost': float(lineItem.get('total_cost').replace("INR", "").strip()),
+                'activeFlag': 1,
+                'createdBy': decoded_details.get('user_login_id')
+            }
+            generate_po_line_item_query = text(INSERT_PURCHASE_ORDER_LINE_ITEM)
+            db.execute(generate_po_line_item_query, poLineItemDetailsInputDict)
+
+        db.commit()
+        return {
+            "message":  "PO Details inserted successfully",
+            "data": {
+                "poNumber": poNumber
+            }     
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Something went wrong. Please try again. error is:"+str(e))
+

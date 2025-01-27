@@ -5,5 +5,6 @@ GET_PRODUCT_DETAILS = """
     FROM 
         evenflow_product_master
     WHERE 
-        sku = '{sku}'
+        sku = '{sku}' and
+        active_flag = 1
 """

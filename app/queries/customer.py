@@ -5,5 +5,6 @@ GET_CUSTOMER_DETAILS = """
     FROM 
 	    evenflow_customer_master 
     WHERE 
-	    id = '{customer_id}'
+	    id = '{customer_id}' and 
+        active_flag = 1
 """

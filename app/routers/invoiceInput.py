@@ -57,14 +57,14 @@ class CreateInvoiceInputRequest(BaseModel):
     otherWarehousePostalCode: Optional[str] = Field(None, description="other Warehouse Postal Code", example="xyz")
 
 # Updated endpoint for handling an array of objects
-@router.post("/generateInvoiceInputs", status_code=201, summary="Create new Purchase Orders")
+@router.post("/generateInvoiceInputs", status_code=201, summary="Create new Invoice input")
 def create_invoice_input(
     requests: List[CreateInvoiceInputRequest],  # Accepts a list of objects
     db: Session = Depends(get_db),
     authorization: str = Header(..., description="Bearer token for authentication", example="Bearer your_token_here")
 ):
     """
-    Create new Purchase Orders from an array of input objects.
+    Create new Invoice input from an array of input objects.
     """
     # Validate authorization
     if not authorization.startswith("Bearer "):

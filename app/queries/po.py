@@ -145,6 +145,7 @@ FETCH_TOTAL_COUNT_PO_LISTING_QUERY = """
 
 PO_DETAILS_QUERY_BY_PO_NUMBER = """
     SELECT  
+        '{po_number}' as po_number,
 	    po_status,
 	    vendor,
 	    ship_to_location,
@@ -174,6 +175,7 @@ PO_DETAILS_QUERY_BY_PO_NUMBER = """
     """
 PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER_WITHOUT_FULFILLED = """
     SELECT
+        '{po_number}' as po_number,
 	    asin,
 	    external_id,
 	    model_number,
@@ -201,6 +203,7 @@ PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER_WITHOUT_FULFILLED = """
 
 PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER_WITH_FULFILLED = """
     SELECT
+        '{po_number}' as po_number,
 	    asin,
 	    external_id,
 	    model_number,
@@ -221,6 +224,6 @@ PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER_WITH_FULFILLED = """
     ON 
 	    po.id = poli.evenflow_purchase_orders_id
     WHERE 
-	    po.po_number = '{po_number}'
+	    po.po_number = '{po_number}' and
 
     """

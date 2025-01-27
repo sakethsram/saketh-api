@@ -10,7 +10,8 @@ from app.queries.reportingDetails import (
     GET_PURCHASE_ORDER_AGG_DETAILS,
     GET_PURCHASE_ORDER_TOP_CUSTOMERS_AGG_DETAILS,
     GET_INVOICES_TOP_CUSTOMERS_AGG_DETAILS,
-    GET_INVOICES_AGG_DETAILS
+    GET_INVOICES_AGG_DETAILS,
+    GET_PO_COUNT_DETAILS
 )
 
 router = APIRouter()
@@ -64,4 +65,27 @@ def get_warehouse_details(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
+
+@router.get("/getPoCountsForReporting")
+def get_warehouse_details(
+    db: Session = Depends(get_db),
+    authorization: str = Header(..., description="Bearer token for authentication", example="Bearer your_token_here")
+):
+    """
+    Fetch invoices reporting details details.
+    """
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=403, detail="Invalid Authorization header format")
     
+    try:
+        decoded_details = decode_access_token(authorization.split(" ")[1])
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+    try:
+        poCountDetails = db.execute(text(GET_PO_COUNT_DETAILS)).mappings().all()
+        return {
+            "poCountDetails": poCountDetails,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
+        
