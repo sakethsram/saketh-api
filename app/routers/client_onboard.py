@@ -18,6 +18,7 @@ from pprint import pprint
 import pandas as pd
 from sqlalchemy.exc import SQLAlchemyError
 import re
+from app.schemas import AccountingToolDetails  
 
 router = APIRouter()
 security_scheme = HTTPBearer()
@@ -39,7 +40,11 @@ def get_clients(
     
     return [ClientMasterSchema(id=client.id,name=client.name) for client in clients]
 
-@router.get("/account-details", response_model=List[AccountingDetailsSchema])
+from sqlalchemy.orm import Session
+from fastapi import HTTPException, Depends, Header
+from typing import List
+
+@router.get("/account-details", response_model=List[AccountingToolDetails])
 def get_accounting_details(
     db: Session = Depends(get_db),
     current_user: User = Depends(security_scheme),
@@ -51,16 +56,17 @@ def get_accounting_details(
     token = authorization.split(" ")[1]
     payload = validate_token(token, db)
 
+    # Querying the actual model (EvenflowAccountingDetails)
     accounting_details = (
-        db.query(AccountingDetailsSchema)
-        .filter(AccountingDetailsSchema.active_flag == 1)
+        db.query(EvenflowAccountingDetails)  # Use the model here
+        .filter(EvenflowAccountingDetails.active_flag == 1)  # Assuming active_flag is a boolean column
         .all()
     )
 
     if not accounting_details:
         raise HTTPException(status_code=404, detail="Accounting Details not found")
 
-    return [AccountingDetailsSchema(id=detail.id, name=detail.accounting_tool_name) for detail in accounting_details]
+    return [AccountingToolDetails(**detail.__dict__) for detail in accounting_details]
 
 def dump_body(mapping_items):
     return [item.dict() for item in mapping_items]
@@ -70,7 +76,7 @@ def write_po_mappings(df, dfile):
     print(f"File written: {dfile}")
     return
 
-def onboard_distributors(db, current_user, cdetails, distributors):
+def onboard_distributors(db: Session, current_user: str, cdetails: object, distributors: list):
     try:
         # Validate input
         if not hasattr(cdetails, 'id'):
@@ -78,35 +84,51 @@ def onboard_distributors(db, current_user, cdetails, distributors):
         if not isinstance(distributors, (list, tuple)):
             raise ValueError("distributors must be a list or tuple")
 
-        # Prepare distributor instances
-        distys_instances = [
-            EvenflowDistys(
-                client_id=cdetails.id,
-                disty_id=disty_id,
-                created_by=current_user,
-                modified_by=current_user,
-                active_flag=1
-            )
-            for disty_id in distributors
-        ]
+        # Fetch distributor details from disty_master table
+        disty_records = db.query(DistyMaster).filter(DistyMaster.id.in_(distributors)).all()
 
-        # Bulk insert distributors
-        db.bulk_save_objects(distys_instances)
-        db.commit()
+        if not disty_records:
+            raise ValueError("No distributors found with the provided IDs")
 
-        # Logging inserted records
-        print("Client Distributors details:")
-        for instance in distys_instances:
-            pprint(vars(instance))
-        print()
+        # Prepare distributor instances for insertion into EvenflowDistys
+        distys_instances = []
+        for disty in disty_records:
+            # Check if the distributor already exists in EvenflowDistys to prevent duplicates
+            existing_record = db.query(EvenflowDistys).filter_by(client_id=cdetails.id, disty_id=disty.id).first()
+            if not existing_record:
+                distys_instances.append(EvenflowDistys(
+                    client_id=cdetails.id,
+                    disty_id=disty.id,
+                    created_by=current_user,
+                    modified_by=current_user,
+                    active_flag=1
+                ))
+
+        # Bulk insert distributors into EvenflowDistys table
+        if distys_instances:
+            db.bulk_save_objects(distys_instances)
+            db.commit()  # Commit the transaction
+
+            # Logging inserted records
+            print("Client Distributors details:")
+            for instance in distys_instances:
+                pprint(vars(instance))
+            print()
+
+        else:
+            print("No new distributors to add.")
 
     except SQLAlchemyError as e:
         db.rollback()
         print(f"Database error occurred: {str(e)}")
     except ValueError as e:
         print(f"Validation error: {str(e)}")
+    except Exception as e:
+        db.rollback()
+        print(f"Unexpected error: {str(e)}")
     finally:
-        db.close()    
+        db.close()
+
 
 
 def onboard_client_acccount(db, current_user, cdetails, accdetails):
