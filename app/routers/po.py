@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header, Query, File, Uplo
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
+from app.utils.logger  import logger
 from datetime import date
 from datetime import datetime
 from typing import List, Optional
@@ -104,6 +105,7 @@ def list_po(
     # Decode token
     try:
         decoded_details = decode_access_token(authorization.split(" ")[1])
+        logger.info("Request received for /poListing from-"+decoded_details.get('user_login_id'))
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
     
@@ -125,6 +127,7 @@ def list_po(
         result = db.execute(text(FETCH_PO_LISTING_QUERY_FORMATED)).mappings().all()
         totalRecords = db.execute(text(FETCH_TOTAL_COUNT_PO_LISTING_QUERY_FORMATED)).mappings().first()
     except Exception as e:
+        logger.error(f"Failed to fetch poListing: {e}")
         raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
     
     return {
@@ -147,7 +150,9 @@ def get_po_details(
     
     try:
         decoded_details = decode_access_token(authorization.split(" ")[1])
+        logger.info("Request received for /poDetailsByPoNumber from-"+decoded_details.get('user_login_id'))
     except Exception as e:
+        logger.error(f"Failed to poDetailsByPoNumber : {e}")
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
     
     values = {"po_number": poNumber}
@@ -162,6 +167,7 @@ def get_po_details(
         poDetails = db.execute(text(poDetailsQuery)).mappings().first()
         poLineItemDetails = db.execute(text(poLineItemDetailsQuery)).mappings().all()
     except Exception as e:
+        logger.error(f"Failed to poDetailsByPoNumber: {e}")
         raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
     
     return {
@@ -183,6 +189,7 @@ def generate_po_details(
     
     try:
         decoded_details = decode_access_token(authorization.split(" ")[1])
+        logger.info("Request received for /generatePoDetails from-"+decoded_details.get('user_login_id'))
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
     
@@ -281,6 +288,7 @@ def generate_po_details(
         }
     except Exception as e:
         db.rollback()
+        logger.error(f"Failed to generatePoDetails: {e}")
         raise HTTPException(status_code=500, detail="Something went wrong. Please try again.")
 
 @router.post("/uploadPo", status_code=200, summary="Upload Purchase Orders pdf file")
@@ -300,11 +308,13 @@ async def generate_po_details(
     
     try:
         decoded_details = decode_access_token(authorization.split(" ")[1])
+        logger.info("Request received for /uploadPo from-"+decoded_details.get('user_login_id'))
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
     
     # Validate file type
     if file.content_type != 'application/pdf':
+        logger.error(f"Failed to uploadPo, Only PDF files are allowed")
         raise HTTPException(status_code=400, detail="Only PDF files are allowed")
 
     FOLDER_PATH = os.getenv("UPLOAD_FOLDER")
@@ -316,6 +326,7 @@ async def generate_po_details(
         with open(file_location, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
     except Exception as e:
+        logger.error(f"Failed to uploadPo, Error saving file: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error saving file: {str(e)}")
     
     poData = extractData(file_location)
@@ -343,6 +354,7 @@ async def generate_po_details(
             ContentType=file.content_type, 
         )
     except Exception as e:
+        logger.error(f"Failed to uploadPo, Error uploading file to S3: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error uploading file to S3: {str(e)}")
     
     toalRequestedItems = 0
@@ -443,5 +455,6 @@ async def generate_po_details(
         }
     except Exception as e:
         db.rollback()
+        logger.error(f"Failed to uploadPo, Error is: {str(e)}")
         raise HTTPException(status_code=500, detail="Something went wrong. Please try again. error is:"+str(e))
 

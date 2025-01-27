@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
+from app.utils.logger  import logger
 from datetime import date
 from typing import List, Optional
 from app.dependencies import get_db
@@ -72,6 +73,7 @@ def create_invoice_input(
     
     try:
         decoded_details = decode_access_token(authorization.split(" ")[1])
+        logger.info("Request received for /generateInvoiceInputs from-"+decoded_details.get('user_login_id'))
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
 
@@ -178,6 +180,7 @@ def create_invoice_input(
         return {"message": "Invoice line item created successfully"}
     except Exception as e:
         db.rollback()
+        logger.error(f"Failed to create invoice Order {request.poNumber}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to create invoice Order {request.poNumber}: {str(e)}")
 
     

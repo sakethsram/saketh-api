@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
+from app.utils.logger  import logger
 from datetime import date
 from typing import List, Optional
 from app.dependencies import get_db
@@ -25,6 +26,7 @@ def get_warehouse_details(
     
     try:
         decoded_details = decode_access_token(authorization.split(" ")[1])
+        logger.info("Request received for /getWarehouseList from-"+decoded_details.get('user_login_id'))
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
     try:
@@ -33,5 +35,6 @@ def get_warehouse_details(
             "wareHouseList": result,
         }
     except Exception as e:
+        logger.error(f"Failed to getWarehouseList: {e}")
         raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
     
