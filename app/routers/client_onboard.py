@@ -8,13 +8,11 @@ from app.models import User
 from app.models import ClientMaster
 from app.schemas import ClientMasterSchema
 from app.security import validate_token
-from app.models import AccountingDetails
 from app.schemas import AccountingDetailsSchema
 from app.models import EvenflowAccountingDetails
 from app.models import EvenflowDistys
 from app.models import EvenflowCustomerMaster
 from app.models import EvenflowProductMaster
-from app.schemas import EvenFlowAccountingDetailsSchema
 from app.schemas import ClientOnboardRequest
 from pprint import pprint
 import pandas as pd
@@ -54,8 +52,8 @@ def get_accounting_details(
     payload = validate_token(token, db)
 
     accounting_details = (
-        db.query(AccountingDetails)
-        .filter(AccountingDetails.active_flag == 1)
+        db.query(AccountingDetailsSchema)
+        .filter(AccountingDetailsSchema.active_flag == 1)
         .all()
     )
 
@@ -110,7 +108,6 @@ def onboard_distributors(db, current_user, cdetails, distributors):
     finally:
         db.close()    
 
-from sqlalchemy.exc import SQLAlchemyError
 
 def onboard_client_acccount(db, current_user, cdetails, accdetails):
     try:
@@ -158,8 +155,6 @@ def onboard_client_acccount(db, current_user, cdetails, accdetails):
         # Close the session if applicable
         db.close()
     
-import pandas as pd
-
 def po_update_mappings(mapping):
     po_mapping_file = "po_mapping.xlsx"
 

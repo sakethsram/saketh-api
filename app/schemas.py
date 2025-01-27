@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from pydantic import HttpUrl
 from typing import Optional
 from typing import List
 from datetime import datetime
@@ -73,3 +74,27 @@ class AccountingDetailsSchema(BaseModel):
     id: int
     name: str
 
+class AccountingDetails(BaseModel):
+    url: HttpUrl
+    username: str
+    password: str
+
+class ClientDetails(BaseModel):
+    id: int
+    distributors: List[int]
+    accountingtool: str
+    priority: Optional[str] = None
+    generateinvoice: bool
+    accountingDetails: AccountingDetails
+
+class MappingItem(BaseModel):
+    sourceField: str
+    targetField: str
+    value: Optional[str] = None
+    
+class ClientOnboardRequest(BaseModel):
+    client_details: ClientDetails
+    po_mapping: List[MappingItem]
+    itemmaster_mapping: List[MappingItem]
+    customermaster_mapping: List[MappingItem]
+     

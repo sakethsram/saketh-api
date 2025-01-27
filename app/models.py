@@ -119,7 +119,7 @@ class EvenflowDistys(Base):
     active_flag = Column(SmallInteger, default=1, nullable=False)
 
 
-class AccountingDetails(Base):
+class EvenflowAccountingDetails(Base):
     __tablename__ = "evenflow_accounting_details"
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey("client_master.id"), nullable=False)
