@@ -194,7 +194,7 @@ git pull
 git branch client-onboarding
 git checkout client-onboarding
 git add file1, file2
-git commin -m "Adding client onboarding API"
+git commit -m "Adding client onboarding API"
 git push --set-upstream client-onboarding
 # Raise Pull Request
 ```

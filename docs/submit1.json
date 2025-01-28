@@ -1,0 +1,812 @@
+{
+    "client_details": {
+      "id": 1,
+      "distributors": [1, 2],
+      "accountingtool": "1",
+      "priority": "High",
+      "generateinvoice": true,
+      "accountingDetails": {
+        "url": "https://accounting.example.com",
+        "username": "client_user",
+        "password": "secure_password"
+      }
+    },
+    "po_mapping": [
+    {
+      "sourceField": "PO",
+      "targetField": "evenflow_purchase_orders.po_number",
+      "value": "7VTEZRNB"
+    },
+    {
+      "sourceField": "Status",
+      "targetField": "evenflow_purchase_orders.po_status",
+      "value": "Closed"
+    },
+    {
+      "sourceField": "Vendor",
+      "targetField": "evenflow_purchase_orders.vendor",
+      "value": "EV7CR"
+    },
+    {
+      "sourceField": "Ship to Location",
+      "targetField": "evenflow_purchase_orders.ship_to_location",
+      "value": "BLR4 - BENGALURU, KARNATAKA"
+    },
+    {
+      "sourceField": "Ordered On",
+      "targetField": "evenflow_purchase_orders.ordered_on",
+      "value": "11/20/2024"
+    },
+    {
+      "sourceField": "Ship window",
+      "targetField": "evenflow_purchase_orders.ship_window_from",
+      "value": "21/11/2024"
+    },
+    {
+      "sourceField": "Ship window",
+      "targetField": "evenflow_purchase_orders.ship_window_to",
+      "value": "1/1/2025"
+    },
+    {
+      "sourceField": "Freight terms",
+      "targetField": "evenflow_purchase_orders.freight_terms",
+      "value": "Prepaid"
+    },
+    {
+      "sourceField": "Payment Method",
+      "targetField": "evenflow_purchase_orders.payment_method",
+      "value": "Invoice"
+    },
+    {
+      "sourceField": "Payment terms",
+      "targetField": "evenflow_purchase_orders.payment_terms",
+      "value": "NET DUE IN 45 DAYS"
+    },
+    {
+      "sourceField": "Purchasing entity",
+      "targetField": "evenflow_purchase_orders.purchasing_entity",
+      "value": "RETAILEZ PRIVATE LIMITED"
+    },
+    {
+      "sourceField": "Submitted (Items)",
+      "targetField": "evenflow_purchase_orders.submitted_items",
+      "value": "2"
+    },
+    {
+      "sourceField": "Submitted (Quantity Submitted)",
+      "targetField": "evenflow_purchase_orders.submitted_qty",
+      "value": "82"
+    },
+    {
+      "sourceField": "Submitted (Total cost)",
+      "targetField": "evenflow_purchase_orders.submitted_total_cost",
+      "value": "37526.00 INR"
+    },
+    {
+      "sourceField": "Accepted (Items)",
+      "targetField": "evenflow_purchase_orders.accepted_items",
+      "value": "2"
+    },
+    {
+      "sourceField": "Accepted (Quantity Submitted)",
+      "targetField": "evenflow_purchase_orders.accepted_qty",
+      "value": "82"
+    },
+    {
+      "sourceField": "Accepted (Total cost)",
+      "targetField": "evenflow_purchase_orders.accepted_total_cost",
+      "value": "37526.00 INR"
+    },
+    {
+      "sourceField": "Cancelled (Items)",
+      "targetField": "evenflow_purchase_orders.cancelled_items",
+      "value": "0"
+    },
+    {
+      "sourceField": "Cancelled (Quantity Submitted)",
+      "targetField": "evenflow_purchase_orders.cancelled_qty",
+      "value": "0"
+    },
+    {
+      "sourceField": "Cancelled (Total cost)",
+      "targetField": "evenflow_purchase_orders.cancelled_total_cost",
+      "value": "0.00 INR"
+    },
+    {
+      "sourceField": "Received (Items)",
+      "targetField": "evenflow_purchase_orders.received_items",
+      "value": "2"
+    },
+    {
+      "sourceField": "Received (Quantity Submitted)",
+      "targetField": "evenflow_purchase_orders.received_qty",
+      "value": "82"
+    },
+    {
+      "sourceField": "Received (Total cost)",
+      "targetField": "evenflow_purchase_orders.received_total_cost",
+      "value": "37526.00 INR"
+    },
+    {
+      "sourceField": "Delivery Address",
+      "targetField": "evenflow_purchase_orders.delivery_address_to",
+      "value": "BLR4"
+    },
+    {
+      "sourceField": "Delivery Address",
+      "targetField": "evenflow_purchase_orders.delivery_address",
+      "value": "RETAILEZ PRIVATE LIMITED\nPlot No. 12 P2,\nHitech, Defence and Aerospace Park, Devanahalli\nBENGALURU 562149\nIndia"
+    },
+    {
+      "sourceField": "ASIN",
+      "targetField": "evenflow_purchase_orders_line_items.asin",
+      "value": "B0D95SFFL9"
+    },
+
+    {
+      "sourceField": "External id",
+      "targetField": "evenflow_purchase_orders_line_items.external_id",
+      "value": "EAN:\n89061573\n6556"
+    },
+    {
+      "sourceField": "Model Number",
+      "targetField": "evenflow_purchase_orders_line_items.model_number",
+      "value": "XTR-GM-GRY-P4"
+    },
+    {
+      "sourceField": "HSN",
+      "targetField": "evenflow_purchase_orders_line_items.hsn",
+      "value": "95049090"
+    },
+    {
+      "sourceField": "Title",
+      "targetField": "evenflow_purchase_orders_line_items.title",
+      "value": "Xtrim Puzzle Exercise Mat (4 Tiles & 8 Borders, 16 Sq.Ft. Area) High-Density EVA Foam Mat,\nInterlocking Tiles, Shock Proof, Protective Flooring for Gym Equipment, Puzzle Foam Mat"
+    },
+    {
+      "sourceField": "Window Type",
+      "targetField": "evenflow_purchase_orders_line_items.window_type",
+      "value": "Delivery window\n(Prepaid)"
+    },
+    {
+      "sourceField": "Expected date",
+      "targetField": "evenflow_purchase_orders_line_items.expected_date",
+      "value": "11/21/2024"
+    },
+    {
+      "sourceField": "Quantity Requested",
+      "targetField": "evenflow_purchase_orders_line_items.qty_requested",
+      "value": "52"
+    },
+    {
+      "sourceField": "Accepted quantity",
+      "targetField": "evenflow_purchase_orders_line_items.qty_accepted",
+      "value": "52"
+    },
+    {
+      "sourceField": "Quantity received",
+      "targetField": "evenflow_purchase_orders_line_items.qty_received",
+      "value": "52"
+    },
+    {
+      "sourceField": "Quantity Outstanding",
+      "targetField": "evenflow_purchase_orders_line_items.qty_outstanding",
+      "value": "0"
+    },
+    {
+      "sourceField": "Unit Cost",
+      "targetField": "evenflow_purchase_orders_line_items.unit_cost",
+      "value": "533 INR"
+    },
+    {
+      "sourceField": "Total cost",
+      "targetField": "evenflow_purchase_orders_line_items.total_cost",
+      "value": "27716 INR"
+    }  
+    ],
+   "itemmaster_mapping": [
+    {
+      "sourceField": "Item ID",
+      "targetField": "evenflow_product_master.item_id",
+      "value": "897139000000027000"
+    },
+    {
+      "sourceField": "Item Name",
+      "targetField": "evenflow_product_master.item_name",
+      "value": "Easy Ship weight handling fees (Amazon)"
+    },
+    {
+      "sourceField": "SKU",
+      "targetField": "evenflow_product_master.sku",
+      "value": "Amz_Easy_Ship_WH"
+    },
+    {
+      "sourceField": "HSN/SAC",
+      "targetField": "evenflow_product_master.hsn_sac",
+      "value": "998599"
+    },
+    {
+      "sourceField": "Description",
+      "targetField": "evenflow_product_master.description",
+      "value": "Corner Guards set of 8 for Combos like BSC1,BSC2"
+    },
+    {
+      "sourceField": "Rate",
+      "targetField": "evenflow_product_master.rate",
+      "value": "INR 15.00"
+    },
+    {
+      "sourceField": "Account",
+      "targetField": "evenflow_product_master.account",
+      "value": "Sales - Finished Goods"
+    },
+    {
+      "sourceField": "Account Code",
+      "targetField": "evenflow_product_master.account_code",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Taxable",
+      "targetField": "evenflow_product_master.taxable",
+      "value": "false"
+    },
+    {
+      "sourceField": "Exemption Reason",
+      "targetField": "evenflow_product_master.exemption_reason",
+      "value": "OPENING STOCK"
+    },
+    {
+      "sourceField": "Taxability Type",
+      "targetField": "evenflow_product_master.taxability_type",
+      "value": "Out Of Scope"
+    },
+    {
+      "sourceField": "Product Type",
+      "targetField": "evenflow_product_master.product_type",
+      "value": "goods"
+    },
+    {
+      "sourceField": "Parent Category",
+      "targetField": "evenflow_product_master.parent_category",
+      "value": "Home & Kitchen"
+    },
+    {
+      "sourceField": "Intra State Tax Name",
+      "targetField": "evenflow_product_master.intra_state_tax_name",
+      "value": "GST18"
+    },
+    {
+      "sourceField": "Intra State Tax Rate",
+      "targetField": "evenflow_product_master.intra_state_tax_rate",
+      "value": "18"
+    },
+    {
+      "sourceField": "Intra State Tax Type",
+      "targetField": "evenflow_product_master.intra_state_tax_type",
+      "value": "Group"
+    },
+    {
+      "sourceField": "Inter State Tax Name",
+      "targetField": "evenflow_product_master.inter_state_tax_name",
+      "value": "IGST18"
+    },
+    {
+      "sourceField": "Inter State Tax Rate",
+      "targetField": "evenflow_product_master.inter_state_tax_rate",
+      "value": "18"
+    },
+    {
+      "sourceField": "Inter State Tax Type",
+      "targetField": "evenflow_product_master.inter_state_tax_type",
+      "value": "Simple"
+    },
+    {
+      "sourceField": "Source",
+      "targetField": "evenflow_product_master.source",
+      "value": "1"
+    },
+    {
+      "sourceField": "Reference ID",
+      "targetField": "evenflow_product_master.reference_id",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Status",
+      "targetField": "evenflow_product_master.status",
+      "value": "Active"
+    },
+    {
+      "sourceField": "Usage unit",
+      "targetField": "evenflow_product_master.usage_unit",
+      "value": "pcs"
+    },
+    {
+      "sourceField": "Purchase Rate",
+      "targetField": "evenflow_product_master.purchase_rate",
+      "value": "INR 10.00"
+    },
+    {
+      "sourceField": "Purchase Account",
+      "targetField": "evenflow_product_master.purchase_account",
+      "value": "Cost of Goods Sold"
+    },
+    {
+      "sourceField": "Purchase Account Code",
+      "targetField": "evenflow_product_master.purchase_account_code",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Purchase Description",
+      "targetField": "evenflow_product_master.purchase_description",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Inventory Account",
+      "targetField": "evenflow_product_master.inventory_account",
+      "value": "Inventory Asset"
+    },
+    {
+      "sourceField": "Inventory Account Code",
+      "targetField": "evenflow_product_master.inventory_account_code",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Reorder Point",
+      "targetField": "evenflow_product_master.reorder_point",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Vendor",
+      "targetField": "evenflow_product_master.vendor",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Warehouse Name",
+      "targetField": "evenflow_product_master.warehouse_name",
+      "value": "Tamil Nadu DD WH"
+    },
+    {
+      "sourceField": "Opening Stock",
+      "targetField": "evenflow_product_master.opening_stock",
+      "value": "1"
+    },
+    {
+      "sourceField": "Opening Stock Value",
+      "targetField": "evenflow_product_master.opening_stock_value",
+      "value": "INR 2387723.26"
+    },
+    {
+      "sourceField": "Item Type",
+      "targetField": "evenflow_product_master.item_type",
+      "value": "Inventory"
+    },
+    {
+      "sourceField": "Is Combo Product",
+      "targetField": "evenflow_product_master.is_combo_product",
+      "value": "false"
+    },
+    {
+      "sourceField": "Brand",
+      "targetField": "evenflow_product_master.brand",
+      "value": "Rusabl"
+    },
+    {
+      "sourceField": "Sales Channel",
+      "targetField": "evenflow_product_master.sales_channel",
+      "value": "Website"
+    },
+    {
+      "sourceField": "CF.ASIN",
+      "targetField": "evenflow_product_master.cf_asin",
+      "value": "B09WW45Z5T"
+    },
+    {
+      "sourceField": "CF.FSN",
+      "targetField": "evenflow_product_master.cf_fsn",
+      "value": "KNRG9854CWYVRHGS"
+    },
+    {
+      "sourceField": "CF.Old SKU",
+      "targetField": "evenflow_product_master.cf_old_sku",
+      "value": "KTSFH8XYUKHYFBKW"
+    },
+    {
+      "sourceField": "CF.Old ASIN",
+      "targetField": "evenflow_product_master.cf_old_asin",
+      "value": "SOLAR_COLOURS_4"
+    },
+    {
+      "sourceField": "CF.Old FSN",
+      "targetField": "evenflow_product_master.cf_old_fsn",
+      "value": "HSPG8458GNKJZFEZ"
+    },
+    {
+      "sourceField": "CF.Box count",
+      "targetField": "evenflow_product_master.cf_box_count",
+      "value": "No value"
+    },
+    {
+      "sourceField": "CF.Myntra Style ID",
+      "targetField": "evenflow_product_master.cf_myntra_style_id",
+      "value": "29584162"
+    },
+    {
+      "sourceField": "CF.AZ TP (ex-GST)",
+      "targetField": "evenflow_product_master.cf_az_tp_excl_gst",
+      "value": "141.8"
+    },
+    {
+      "sourceField": "CF.MRP (w tax)",
+      "targetField": "evenflow_product_master.cf_mrp_with_tax",
+      "value": "499"
+    },
+    {
+      "sourceField": "CF.FK TP (ex-GST)",
+      "targetField": "evenflow_product_master.cf_fk_tp_excl_gst",
+      "value": "142"
+    },
+    {
+      "sourceField": "CF.Instamart TP (ex-GST)",
+      "targetField": "evenflow_product_master.cf_instamart_tp_excl_gst",
+      "value": "213.6"
+    },
+    {
+      "sourceField": "CF.EAN",
+      "targetField": "evenflow_product_master.cf_ean",
+      "value": "8906158352522"
+    },
+    {
+      "sourceField": "CF.Brands",
+      "targetField": "evenflow_product_master.cf_brands",
+      "value": "Xtrim"
+    },
+    {
+      "sourceField": "CF.Blinkit ID",
+      "targetField": "evenflow_product_master.cf_blinkit_id",
+      "value": "No value"
+    },
+    {
+      "sourceField": "CF.Blinkit TP",
+      "targetField": "evenflow_product_master.cf_blinkit_tp",
+      "value": "No value"
+    }
+  ],
+  "customermaster_mapping": [
+    {
+      "sourceField": "Display Name",
+      "targetField": "evenflow_customer_master.customer_name",
+      "value": "KONDE PRODUCTS & SERVICES PRIVATE LIMITED"
+    },
+    {
+      "sourceField": "Company Name",
+      "targetField": "evenflow_customer_master.customer_name",
+      "value": "KONDE PRODUCTS & SERVICES PRIVATE LIMITED"
+    },
+    {
+      "sourceField": "Salutation",
+      "targetField": "evenflow_customer_master.customer_contact_salutation",
+      "value": "Mr."
+    },
+    {
+      "sourceField": "First Name",
+      "targetField": "evenflow_customer_master.customer_contact_first_name",
+      "value": "Sunil Sehgal"
+    },
+    {
+      "sourceField": "Last Name",
+      "targetField": "evenflow_customer_master.customer_contact_last_name",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Phone",
+      "targetField": "evenflow_customer_master.customer_contact_phone",
+      "value": "9962677443"
+    },
+    {
+      "sourceField": "Currency Code",
+      "targetField": "evenflow_customer_master.currency_code",
+      "value": "INR"
+    },
+    {
+      "sourceField": "Notes",
+      "targetField": "-",
+      "value": "NOT REQUIRED"
+    },
+    {
+      "sourceField": "Website",
+      "targetField": "evenflow_customer_master.website",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Status",
+      "targetField": "evenflow_customer_master.status",
+      "value": "NOT REQUIRED"
+    },
+    {
+      "sourceField": "Opening Balance",
+      "targetField": "evenflow_customer_master.opening_balance",
+      "value": "527911.18"
+    },
+    {
+      "sourceField": "Opening Balance Exchange Rate",
+      "targetField": "evenflow_customer_master.opening_balance_exchange_rate",
+      "value": "1"
+    },
+    {
+      "sourceField": "Branch ID",
+      "targetField": "evenflow_customer_master.branch_id",
+      "value": "897139000000015000"
+    },
+    {
+      "sourceField": "Branch Name",
+      "targetField": "evenflow_customer_master.branch_name",
+      "value": "Tamil Nadu"
+    },
+    {
+      "sourceField": "Bank Account Payment",
+      "targetField": "evenflow_customer_master.bank_account_payment",
+      "value": "false"
+    },
+    {
+      "sourceField": "Portal Enabled",
+      "targetField": "-",
+      "value": "NOT REQUIRED"
+    },
+    {
+      "sourceField": "Credit Limit",
+      "targetField": "evenflow_customer_master.credit_limit",
+      "value": "false"
+    },
+    {
+      "sourceField": "Customer Sub Type",
+      "targetField": "evenflow_customer_master.customer_sub_type",
+      "value": "business"
+    },
+    {
+      "sourceField": "Billing Attention",
+      "targetField": "evenflow_customer_master.billing_attention",
+      "value": "KONDE PRODUCTS & SERVICES PRIVATE LIMITED(BINOLA)"
+    },
+    {
+      "sourceField": "Billing Address",
+      "targetField": "evenflow_customer_master.billing_address_line_1",
+      "value": "Khasra no. 14/6 min, 7 min, 13 min, 14, 15, 17, 18 min, 23, 24,"
+    },
+    {
+      "sourceField": "Billing Street2",
+      "targetField": "evenflow_customer_master.billing_address_line_2",
+      "value": "Defence and Aerispace Park, Devanahalli"
+    },
+    {
+      "sourceField": "Billing City",
+      "targetField": "evenflow_customer_master.billing_city",
+      "value": "Binola"
+    },
+    {
+      "sourceField": "Billing State",
+      "targetField": "evenflow_customer_master.billing_state",
+      "value": "Haryana"
+    },
+    {
+      "sourceField": "Billing Country",
+      "targetField": "evenflow_customer_master.billing_country",
+      "value": "India"
+    },
+    {
+      "sourceField": "Billing County",
+      "targetField": "-",
+      "value": "NOT REQUIRED"
+    },
+    {
+      "sourceField": "Billing Code",
+      "targetField": "evenflow_customer_master.billing_code",
+      "value": "122413"
+    },
+    {
+      "sourceField": "Billing Phone",
+      "targetField": "evenflow_customer_master.billing_phone",
+      "value": "9962677443"
+    },
+    {
+      "sourceField": "Billing Fax",
+      "targetField": "evenflow_customer_master.billing_fax",
+      "value": "Nothing"
+    },
+    {
+      "sourceField": "Shipping Attention",
+      "targetField": "evenflow_customer_master.shipping_attention",
+      "value": "KONDE PRODUCTS & SERVICES PRIVATE LIMITED(BINOLA)"
+    },
+    {
+      "sourceField": "Shipping Address",
+      "targetField": "evenflow_customer_master.shipping_address_line_1",
+      "value": "Khasra no. 14/6 min, 7 min, 13 min, 14, 15, 17, 18 min, 23, 24,"
+    },
+    {
+      "sourceField": "Shipping Street2",
+      "targetField": "evenflow_customer_master.shipping_address_line_2",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Shipping City",
+      "targetField": "evenflow_customer_master.shipping_city",
+      "value": "Binola"
+    },
+    {
+      "sourceField": "Shipping State",
+      "targetField": "evenflow_customer_master.shipping_state",
+      "value": "Haryana"
+    },
+    {
+      "sourceField": "Shipping Country",
+      "targetField": "evenflow_customer_master.shipping_country",
+      "value": "India"
+    },
+    {
+      "sourceField": "Shipping County",
+      "targetField": "-",
+      "value": "NOT REQUIRED"
+    },
+    {
+      "sourceField": "Shipping Code",
+      "targetField": "evenflow_customer_master.shipping_code",
+      "value": "122413"
+    },
+    {
+      "sourceField": "Shipping Phone",
+      "targetField": "evenflow_customer_master.shipping_phone",
+      "value": "9962677443"
+    },
+    {
+      "sourceField": "Shipping Fax",
+      "targetField": "evenflow_customer_master.shipping_fax",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Skype Identity",
+      "targetField": "evenflow_customer_master.skype_handle",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Facebook",
+      "targetField": "evenflow_customer_master.facebook_handle",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Twitter",
+      "targetField": "evenflow_customer_master.twitter_handle",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Department",
+      "targetField": "evenflow_customer_master.department",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Designation",
+      "targetField": "evenflow_customer_master.designation",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Price List",
+      "targetField": "evenflow_customer_master.price_list",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Payment Terms",
+      "targetField": "evenflow_customer_master.payment_terms",
+      "value": "30"
+    },
+    {
+      "sourceField": "Payment Terms Label",
+      "targetField": "evenflow_customer_master.payment_terms_label",
+      "value": "Net 30"
+    },
+    {
+      "sourceField": "GST Treatment",
+      "targetField": "evenflow_customer_master.gst_treatment",
+      "value": "business_gst"
+    },
+    {
+      "sourceField": "GST Identification Number (GSTIN)",
+      "targetField": "evenflow_customer_master.gst_identification_number",
+      "value": "29AAJCC9783E1Z3"
+    },
+    {
+      "sourceField": "Owner Name",
+      "targetField": "evenflow_customer_master.owner_name",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Primary Contact ID",
+      "targetField": "evenflow_customer_master.primary_contact_id",
+      "value": "897139000000019000"
+    },
+    {
+      "sourceField": "EmailID",
+      "targetField": "evenflow_customer_master.email_id",
+      "value": "sunil.sehgal@konde.in"
+    },
+    {
+      "sourceField": "MobilePhone",
+      "targetField": "evenflow_customer_master.mobile_phone",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Contact ID",
+      "targetField": "evenflow_customer_master.contact_id",
+      "value": "897139000000019000"
+    },
+    {
+      "sourceField": "Contact Name",
+      "targetField": "evenflow_customer_master.contact_name",
+      "value": "KONDE PRODUCTS & SERVICES PRIVATE LIMITED"
+    },
+    {
+      "sourceField": "Contact Type",
+      "targetField": "evenflow_customer_master.contact_type",
+      "value": "customer"
+    },
+    {
+      "sourceField": "Place Of Contact",
+      "targetField": "evenflow_customer_master.place_of_contact",
+      "value": "HR"
+    },
+    {
+      "sourceField": "Place of Contact(With State Code)",
+      "targetField": "evenflow_customer_master.place_of_contact_with_state_code",
+      "value": "06-Haryana"
+    },
+    
+    
+    
+    
+    
+    
+    {
+      "sourceField": "Taxable",
+      "targetField": "evenflow_customer_master.taxable",
+      "value": "1"
+    },
+    {
+      "sourceField": "TaxID",
+      "targetField": "evenflow_customer_master.tax_id",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Tax Name",
+      "targetField": "evenflow_customer_master.tax_name",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Tax Percentage",
+      "targetField": "evenflow_customer_master.tax_percentage",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Exemption Reason",
+      "targetField": "evenflow_customer_master.exemption_reason",
+      "value": "No value"
+    },
+    {
+      "sourceField": "Contact Address ID",
+      "targetField": "evenflow_customer_master.contact_address_id",
+      "value": "897139000000019000"
+    },
+    {
+      "sourceField": "Brand",
+      "targetField": "evenflow_customer_master.brand",
+      "value": "Rusabl"
+    },
+    {
+      "sourceField": "Sales Channel",
+      "targetField": "evenflow_customer_master.sales_channel",
+      "value": "Retailnet"
+    },
+    {
+      "sourceField": "CF.MSME",
+      "targetField": "evenflow_customer_master.cf_msme",
+      "value": "Uncategorised"
+    }
+  ]
+}

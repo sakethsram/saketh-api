@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from pydantic import HttpUrl
 from typing import Optional
 from typing import List
 from datetime import datetime
@@ -32,13 +33,21 @@ class UserSchema(BaseModel):
 class DistyInput(BaseModel):
     disty_id: int
 
+from pydantic import BaseModel
+
 class AccountingToolDetails(BaseModel):
+    id: int  # Add id if it's present in the model (primary key, for example)
     invoice_inputs: str
     invoice_number_auto: int
     accounting_tool_name: str
     accounting_tool_url: str
     accounting_tool_userid: str
     accounting_tool_pwd: str
+    active_flag: bool  # If you have this field and want to return it
+
+    class Config:
+        orm_mode = True  # This allows Pydantic to work with ORM models directly
+
 
 class ClientOnboardingRequest(BaseModel):
     b2b_distributors: List[DistyInput]
@@ -73,3 +82,27 @@ class AccountingDetailsSchema(BaseModel):
     id: int
     name: str
 
+class AccountingDetails(BaseModel):
+    url: HttpUrl
+    username: str
+    password: str
+
+class ClientDetails(BaseModel):
+    id: int
+    distributors: List[int]
+    accountingtool: str
+    priority: Optional[str] = None
+    generateinvoice: bool
+    accountingDetails: AccountingDetails
+
+class MappingItem(BaseModel):
+    sourceField: str
+    targetField: str
+    value: Optional[str] = None
+    
+class ClientOnboardRequest(BaseModel):
+    client_details: ClientDetails
+    po_mapping: List[MappingItem]
+    itemmaster_mapping: List[MappingItem]
+    customermaster_mapping: List[MappingItem]
+     
