@@ -1,4 +1,3 @@
-from fastapi import APIRouter, Depends, HTTPException, Form
 from sqlalchemy.orm import Session
 from app.dependencies import get_db
 from app.models import User, Role, UserRole
@@ -7,8 +6,13 @@ from app.models import UserTokens
 import jwt
 import logging
 from app.security import SECRET_KEY, ALGORITHM
+from fastapi import APIRouter, Depends, HTTPException, Form, Header
+from fastapi.security import HTTPBearer
+from app.security import validate_token
+from datetime import datetime
 
 router = APIRouter()
+security_scheme = HTTPBearer()
 
 @router.post("/login")
 def login(
@@ -100,3 +104,43 @@ def login(
         "client_id": user.client_id,
         "user_full_name": f"{user.user_first_name} {user.user_last_name}",
     }
+
+@router.get("/token_validation", tags=["Authentication"])
+def token_valid(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(security_scheme),
+    authorization: str = Header(None, description="Bearer token for authentication")
+):
+    
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=403, detail="Authorization header missing or invalid")
+
+    token = authorization.split(" ")[1]
+    payload = validate_token(token, db)
+
+    if payload:return {"is_token_valid": "yes"}
+    return {"is_token_valid": "no"}
+
+@router.post("/logout", tags=["Authentication"])
+def logout(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(security_scheme),
+    authorization: str = Header(None, description="Bearer token for authentication"),
+):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=403, detail="Authorization header missing or invalid")
+
+    token = authorization.split(" ")[1]
+
+    # Query for the token in the UserTokens table
+    token_entry = db.query(UserTokens).filter(UserTokens.token == token).first()
+
+    if token_entry:
+        # Update the token's active_flag to 0 and set modified_on to the current time
+        token_entry.active_flag = 0
+        token_entry.modified_on = datetime.utcnow()  # Ensure UTC timezone is used
+        db.commit()
+
+        return {"detail": "Token successfully marked as inactive"}
+    
+    return {"detail": "Token not found, no action taken"}
