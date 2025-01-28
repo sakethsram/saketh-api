@@ -1,0 +1,54 @@
+SourceField,TargetField,SampleValue
+Item ID,header.item_id,8.97E+17
+Item Name,header.item_name,Easy Ship weight handling fees (Amazon)
+SKU,header.sku,Amz_Easy_Ship_WH
+HSN/SAC,header.hsn_sac,998599
+Description,header.description,"Corner Guards set of 8 for Combos like BSC1,BSC2"
+Rate,header.rate,INR 15.00
+Account,header.account,Sales - Finished Goods
+Account Code,header.account_code,
+Taxable,header.taxable,FALSE
+Exemption Reason,header.exemption_reason,OPENING STOCK
+Taxability Type,header.taxability_type,Out Of Scope
+Product Type,header.product_type,goods
+Parent Category,header.parent_category,Home & Kitchen
+Intra State Tax Name,header.intra_state_tax_name,GST18
+Intra State Tax Rate,header.intra_state_tax_rate,18
+Intra State Tax Type,header.intra_state_tax_type,Group
+Inter State Tax Name,header.inter_state_tax_name,IGST18
+Inter State Tax Rate,header.inter_state_tax_rate,18
+Inter State Tax Type,header.inter_state_tax_type,Simple
+Source,header.source,1
+Reference ID,header.reference_id,
+Status,header.status,Active
+Usage unit,header.usage_unit,pcs
+Purchase Rate,header.purchase_rate,INR 10.00
+Purchase Account,header.purchase_account,Cost of Goods Sold
+Purchase Account Code,header.purchase_account_code,
+Purchase Description,header.purchase_description,
+Inventory Account,header.inventory_account,Inventory Asset
+Inventory Account Code,header.inventory_account_code,
+Reorder Point,header.reorder_point,
+Vendor,header.vendor,
+Warehouse Name,header.warehouse_name,Tamil Nadu DD WH
+Opening Stock,header.opening_stock,1
+Opening Stock Value,header.opening_stock_value,INR 2387723.26
+Item Type,header.item_type,Inventory
+Is Combo Product,header.is_combo_product,FALSE
+Brand,header.brand,Rusabl
+Sales Channel,header.sales_channel,Website
+CF.ASIN,header.cf_asin,B09WW45Z5T
+CF.FSN,header.cf_fsn,KNRG9854CWYVRHGS
+CF.Old SKU,header.cf_old_sku,KTSFH8XYUKHYFBKW
+CF.Old ASIN,header.cf_old_asin,SOLAR_COLOURS_4
+CF.Old FSN,header.cf_old_fsn,HSPG8458GNKJZFEZ
+CF.Box count,header.cf_box_count,
+CF.Myntra Style ID,header.cf_myntra_style_id,29584162
+CF.AZ TP (ex-GST),header.cf_az_tp_excl_gst,141.8
+CF.MRP (w tax),header.cf_mrp_with_tax,499
+CF.FK TP (ex-GST),header.cf_fk_tp_excl_gst,142
+CF.Instamart TP (ex-GST),header.cf_instamart_tp_excl_gst,213.6
+CF.EAN,header.cf_ean,8.91E+12
+CF.Brands,header.cf_brands,Xtrim
+CF.Blinkit ID,header.cf_blinkit_id,
+CF.Blinkit TP,header.cf_blinkit_tp,

@@ -1,0 +1,67 @@
+SourceField,TargetField,SampleValue
+Display Name,header.customer_name,KONDE PRODUCTS & SERVICES PRIVATE LIMITED
+Company Name,header.customer_name,KONDE PRODUCTS & SERVICES PRIVATE LIMITED
+Salutation,header.customer_contact_salutation,Mr.
+First Name,header.customer_contact_first_name,Sunil Sehgal
+Last Name,header.customer_contact_last_name,
+Phone,header.customer_contact_phone,9962677443
+Currency Code,header.currency_code,INR
+Notes,-,NOT REQUIRED
+Website,header.website,
+Status,-,NOT REQUIRED
+Opening Balance,header.opening_balance,527911.18
+Opening Balance Exchange Rate,header.opening_balance_exchange_rate,1
+Branch ID,header.branch_id,8.97E+17
+Branch Name,header.branch_name,Tamil Nadu
+Bank Account Payment,header.bank_account_payment,FALSE
+Portal Enabled,-,NOT REQUIRED
+Credit Limit,header.credit_limit,0
+Customer Sub Type,header.customer_sub_type,business
+Billing Attention,header.billing_attention,KONDE PRODUCTS & SERVICES PRIVATE LIMITED(BINOLA)
+Billing Address,header.billing_address_line_1,"Khasra no. 14/6 min, 7 min, 13 min, 14, 15, 17, 18 min, 23, 24,"
+Billing Street2,header.billing_address_line_2,"Defence and Aerispace Park, Devanahalli"
+Billing City,header.billing_city,Binola
+Billing State,header.billing_state,Haryana
+Billing Country,header.billing_country,India
+Billing County,-,NOT REQUIRED
+Billing Code,header.billing_code,122413
+Billing Phone,header.billing_phone,9962677443
+Billing Fax,header.billing_fax,
+Shipping Attention,header.shipping_attention,KONDE PRODUCTS & SERVICES PRIVATE LIMITED(BINOLA)
+Shipping Address,header.shipping_address_line_1,"Khasra no. 14/6 min, 7 min, 13 min, 14, 15, 17, 18 min, 23, 24,"
+Shipping Street2,header.shipping_address_line_2,
+Shipping City,header.shipping_city,Binola
+Shipping State,header.shipping_state,Haryana
+Shipping Country,header.shipping_country,India
+Shipping County,-,NOT REQUIRED
+Shipping Code,header.shipping_code,122413
+Shipping Phone,header.shipping_phone,9962677443
+Shipping Fax,header.shipping_fax,
+Skype Identity,header.skype_handle,
+Facebook,header.facebook_handle,
+Twitter,header.twitter_handle,
+Department,header.department,
+Designation,header.designation,
+Price List,header.price_list,
+Payment Terms,header.payment_terms,30
+Payment Terms Label,header.payment_terms_label,Net 30
+GST Treatment,header.gst_treatment,business_gst
+GST Identification Number (GSTIN),header.gst_identification_number,29AAJCC9783E1Z3
+Owner Name,header.owner_name,
+Primary Contact ID,header.primary_contact_id,8.97E+17
+EmailID,header.email_id,sunil.sehgal@konde.in
+MobilePhone,header.mobile_phone,
+Contact ID,header.contact_id,8.97E+17
+Contact Name,header.contact_name,KONDE PRODUCTS & SERVICES PRIVATE LIMITED
+Contact Type,header.contact_type,customer
+Place Of Contact,header.place_of_contact,HR
+Place of Contact(With State Code),header.place_of_contact_with_state_code,06-Haryana
+Taxable,header.taxable,TRUE
+TaxID,header.tax_id,
+Tax Name,header.tax_name,
+Tax Percentage,header.tax_percentage,
+Exemption Reason,header.exemption_reason,
+Contact Address ID,header.contact_address_id,8.97E+17
+Brand,header.brand,Rusabl
+Sales Channel,header.sales_channel,Retailnet
+CF.MSME,header.cf_msme,Uncategorised

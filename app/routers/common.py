@@ -8,55 +8,64 @@ from app.models import User
 from app.schemas import UploadPoSchema
 from app.security import validate_token
 from app.dependencies import get_db
-from app.routers.utilities import convert_xlsx_to_json
+from app.routers.utilities import convert_csv_to_json
 from app.routers.utilities import ensure_directory_exists
 from app.routers.utilities import calculate_sha256
 from app.routers.utilities import get_file_path
 from app.routers.utilities import save_file
 from app.config.config import settings
+from app.routers.utilities import convert_json_to_csv
 
-
+# Initialize FastAPI router
 router = APIRouter()
 security_scheme = HTTPBearer()
 
-po_folder = settings.purchase_orders_folder
+# Base folder settings from config
 base_folder = settings.base_folder
+po_folder = settings.purchase_orders_folder
 po_mapping = settings.po_mappings_folder
+sample_po_folder = settings.sample_po
 im_folder = settings.item_master_folder
 im_mapping = settings.item_master_mappings_folder
 cm_folder = settings.customer_master_folder
 cm_mapping = settings.customer_master_mappings_folder
 
-# Handle Purchase Orders
+# Function to handle Purchase Order (PO) file uploads
 def handle_po_file(db: Session, file: UploadFile, client_name: str, hash: str, page_id: str):
-    """Handle Purchase Order files."""
-    utc_timestamp = datetime.now().strftime("%H%M%S")
+    # Determine the file extension
     file_extension = os.path.splitext(file.filename)[1]
-    if not file_extension:
-        raise HTTPException(status_code=400, detail="File must have a valid extension.")
-    
-    file_name = f"purchase_order_{utc_timestamp}{file_extension}"
-    # e_commerce_platform/purchase_orders/evenflow/purchase_orders/22-01-2025/purchase_order_133836.pdf
-    file_path = get_file_path(po_folder, client_name, po_folder, file_name)
+    # Construct file names
+    po_file_name = f"{client_name}-{sample_po_folder}{file_extension}"
+    po_mappings_file_name = f"{client_name}-{po_mapping}.csv"
 
-    # Ensure PO Mappings folder exists
-    # e_commerce_platform/purchase_orders/evenflow/po_mappings/22-01-2025/purchase_order_133836.pdf
-    po_mappings = os.path.join(base_folder, po_folder, client_name, po_mapping)
-    ensure_directory_exists(po_mappings)
+    # Construct file paths for PO and PO mappings
+    # e-commerce-platform->clientname->purchase-orders->sample-po->clientname-sample-po.pdf
+    file_path = get_file_path(client_name, po_folder, sample_po_folder, po_file_name)
 
-    # Save file and validate hash
+    # e-commerce-platform->clientname->purchase-orders->po-mappings->clientname-po-mappings.csv
+    po_mappings_folder_path = get_file_path(client_name, po_folder, po_mapping, po_mappings_file_name)
+
+    # Save the uploaded file to the specified path
     save_file(file, file_path)
+    # Calculate the hash of the uploaded file and verify its integrity
     uploaded_file_hash = calculate_sha256(file_path)
     if uploaded_file_hash != hash:
         os.remove(file_path)
         raise HTTPException(status_code=400, detail="Integrity check failed.")
 
-    # Process the file using the automation script (PO)
+    # Process the CSV file and extract data
     try:
-        extracted_data = convert_xlsx_to_json(page_id)
+        extracted_data = convert_csv_to_json(page_id)
     except Exception as e:
         os.remove(file_path)
         raise HTTPException(status_code=500, detail=f"File processing failed: {str(e)}")
+    
+    # Process the json to csv 
+    # try:
+    #     data = convert_json_to_csv(extracted_data, po_mappings_folder_path, po_mappings_file_name)
+    # except Exception as e:
+    #         os.remove(file_path)
+    #         raise HTTPException(status_code=500, detail=f"File processing failed: {str(e)}")
 
     return {
         "filename": file.filename,
@@ -64,35 +73,45 @@ def handle_po_file(db: Session, file: UploadFile, client_name: str, hash: str, p
         "saved_path": file_path,
         "status": "File uploaded and processed successfully",
         "extracted_data": extracted_data,
+        #"json_to_csv": data
     }
 
 # Handle Item Master files
 def handle_im_file(db: Session, file: UploadFile, client_name: str, hash: str, page_id: str):
-    utc_timestamp = datetime.now().strftime("%H%M%S")
+    # Determine the file extension
     file_extension = os.path.splitext(file.filename)[1]
-    if not file_extension:
-        raise HTTPException(status_code=400, detail="File must have a valid extension.")
-    
-    file_name = f"item_master_{utc_timestamp}{file_extension}"
-    # e_commerce_platform/item_master/evenflow/item_master/22-01-2025/item_master_134245.pdf
-    file_path = get_file_path(im_folder, client_name, im_folder, file_name)
+    # Construct file names
+    im_file_name = f"{client_name}-{im_folder}{file_extension}"
+    im_mappings_file_name = f"{client_name}-{im_mapping}.csv"
 
-    # e_commerce_platform/item_master/evenflow/item_master_mappings/22-01-2025/item_master_134245.pdf
-    item_master_mappings = os.path.join(base_folder, im_folder, client_name, im_mapping)
-    ensure_directory_exists(item_master_mappings)
+    # Construct file paths for Item Master and its mappings
+    # e-commerce-platform->clientname->item-master->clientname-item-master.xlsx
+    file_path = get_file_path(client_name, im_folder, "", im_file_name)
 
+    # e-commerce-platform->clientname->item-master->item-master-mappings->clientname-item-master-mappings.csv
+    im_mappings_folder_path = get_file_path(client_name, im_folder, im_mapping, "")
+
+    # Save the uploaded file to the specified path
     save_file(file, file_path)
+    # Calculate the hash of the uploaded file and verify its integrity
     uploaded_file_hash = calculate_sha256(file_path)
     if uploaded_file_hash != hash:
         os.remove(file_path)
         raise HTTPException(status_code=400, detail="Integrity check failed.")
 
-    # Process the file using the automation script (Item Master)
+    # Process the CSV file and extract data
     try:
-        extracted_data = convert_xlsx_to_json(page_id)
+        extracted_data = convert_csv_to_json(page_id)
     except Exception as e:
         os.remove(file_path)
         raise HTTPException(status_code=500, detail=f"File processing failed: {str(e)}")
+
+    #  Process the json to csv 
+    # try:
+    #     data = convert_json_to_csv(extracted_data, im_mappings_folder_path, im_mappings_file_name)
+    # except Exception as e:
+    #         os.remove(file_path)
+    #         raise HTTPException(status_code=500, detail=f"File processing failed: {str(e)}")
 
     return {
         "filename": file.filename,
@@ -100,38 +119,43 @@ def handle_im_file(db: Session, file: UploadFile, client_name: str, hash: str, p
         "saved_path": file_path,
         "status": "File uploaded and processed successfully",
         "extracted_data": extracted_data,
+        #"json_to_excel": data
     }
 
 # Handle Customer Master files
 def handle_cm_file(db: Session, file: UploadFile, client_name: str, hash: str, page_id: str):
-    """Handle Customer Master files."""
-    utc_timestamp = datetime.now().strftime("%H%M%S")
+    # Determine the file extension
     file_extension = os.path.splitext(file.filename)[1]
-    if not file_extension:
-        raise HTTPException(status_code=400, detail="File must have a valid extension.")
-    
-    file_name = f"customer_master_{utc_timestamp}{file_extension}"
-    # e_commerce_platform/customer_master/evenflow/customer_master/22-01-2025/customer_master_134439.pdf
-    file_path = get_file_path(cm_folder, client_name, cm_folder, file_name)
+    # Construct file names
+    cm_file_name = f"{client_name}-{cm_folder}{file_extension}"
+    cm_mappings_file_name = f"{client_name}-{cm_mapping}.csv"
 
-    # Ensure Customer Master Mappings folder exists
-    # e_commerce_platform/customer_master/evenflow/customer_master_mappings/22-01-2025/customer_master_134439.pdf
-    customer_master_mappings = os.path.join(base_folder, cm_folder, client_name, cm_mapping)
-    ensure_directory_exists(customer_master_mappings)
+    # Construct file paths for Customer Master and its mappings
+    # e-commerce-platform->clientname->customer-master->clientname-customer-master.xlsx
+    file_path = get_file_path(client_name, cm_folder, "", cm_file_name)
 
-    # Save file and validate hash
+    # e-commerce-platform->clientname->customer-master->customer-master-mappings->clientname-customer-master-mappings.csv
+    cm_mappings_folder_path = get_file_path(client_name, cm_folder, cm_mapping, "")
+
+    # Save the uploaded file to the specified path
     save_file(file, file_path)
     uploaded_file_hash = calculate_sha256(file_path)
     if uploaded_file_hash != hash:
         os.remove(file_path)
         raise HTTPException(status_code=400, detail="Integrity check failed.")
 
-    # Process the file using the automation script (Customer Master)
+     # Process the CSV file and extract data
     try:
-        extracted_data = convert_xlsx_to_json(page_id)
+        extracted_data = convert_csv_to_json(page_id)
     except Exception as e:
         os.remove(file_path)
         raise HTTPException(status_code=500, detail=f"File processing failed: {str(e)}")
+    # Process the json to csv 
+    # try:
+    #     data = convert_json_to_csv(extracted_data, cm_mappings_folder_path, cm_mappings_file_name)
+    # except Exception as e:
+    #         os.remove(file_path)
+    #         raise HTTPException(status_code=500, detail=f"File processing failed: {str(e)}")
 
     return {
         "filename": file.filename,
@@ -139,8 +163,10 @@ def handle_cm_file(db: Session, file: UploadFile, client_name: str, hash: str, p
         "saved_path": file_path,
         "status": "File uploaded and processed successfully",
         "extracted_data": extracted_data,
+        #"json_to_excel": data
     }
-
+    
+# Endpoint to handle file uploads
 @router.post("/upload/", response_model=UploadPoSchema)
 def upload(
     db: Session = Depends(get_db),
@@ -166,7 +192,7 @@ def upload(
     handle_file_upload = {
         "po_page": handle_po_file,
         "item_master_page": handle_im_file,
-        "customer_master_page": handle_cm_file,
+        "customer_master_page": handle_cm_file
     }
 
     # Validate page_id and invoke respective function
