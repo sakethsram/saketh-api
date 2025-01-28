@@ -18,7 +18,8 @@ from pprint import pprint
 import pandas as pd
 from sqlalchemy.exc import SQLAlchemyError
 import re
-from app.schemas import AccountingToolDetails  
+from app.schemas import AccountingToolDetails 
+from typing import List 
 
 router = APIRouter()
 security_scheme = HTTPBearer()
@@ -40,11 +41,8 @@ def get_clients(
     
     return [ClientMasterSchema(id=client.id,name=client.name) for client in clients]
 
-from sqlalchemy.orm import Session
-from fastapi import HTTPException, Depends, Header
-from typing import List
 
-@router.get("/account-details", response_model=List[AccountingToolDetails])
+@router.get("/account-details", response_model=List[dict])
 def get_accounting_details(
     db: Session = Depends(get_db),
     current_user: User = Depends(security_scheme),
@@ -56,17 +54,24 @@ def get_accounting_details(
     token = authorization.split(" ")[1]
     payload = validate_token(token, db)
 
-    # Querying the actual model (EvenflowAccountingDetails)
+    # Query the database for accounting details
     accounting_details = (
-        db.query(EvenflowAccountingDetails)  # Use the model here
-        .filter(EvenflowAccountingDetails.active_flag == 1)  # Assuming active_flag is a boolean column
+        db.query(EvenflowAccountingDetails)
+        .filter(EvenflowAccountingDetails.active_flag == 1)
         .all()
     )
 
     if not accounting_details:
         raise HTTPException(status_code=404, detail="Accounting Details not found")
 
-    return [AccountingToolDetails(**detail.__dict__) for detail in accounting_details]
+    # Transform response to match required format
+    return [
+        {
+            "id": detail.id,
+            "accountingToolName": detail.accounting_tool_name  # Convert to camelCase
+        }
+        for detail in accounting_details
+    ]
 
 def dump_body(mapping_items):
     return [item.dict() for item in mapping_items]
