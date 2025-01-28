@@ -36,15 +36,9 @@ class DistyInput(BaseModel):
 from pydantic import BaseModel
 
 class AccountingToolDetails(BaseModel):
-    id: int  # Add id if it's present in the model (primary key, for example)
-    invoice_inputs: str
-    invoice_number_auto: int
+    id: int  
     accounting_tool_name: str
-    accounting_tool_url: str
-    accounting_tool_userid: str
-    accounting_tool_pwd: str
-    active_flag: bool  # If you have this field and want to return it
-
+    
     class Config:
         orm_mode = True  # This allows Pydantic to work with ORM models directly
 
