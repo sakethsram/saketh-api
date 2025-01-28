@@ -14,6 +14,7 @@ class Settings:
     purchase_orders_folder = "purchase_orders"
     item_master_folder = "item_master"
     customer_master_folder = "customer_master"
+    sample_po = "sample-po"
 
     # Folder structure sub-categories
     po_mappings_folder = "po_mappings"
