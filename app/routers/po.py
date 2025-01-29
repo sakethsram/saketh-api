@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import List, Optional
 from app.dependencies import get_db
 from app.security import decode_access_token
-from app.automationscript.poAutomation import extractData
+from app.automationscript.poAutomation import ExtractPOData
 from app.queries.po import (
     FETCH_PO_LISTING_QUERY,
     FETCH_TOTAL_COUNT_PO_LISTING_QUERY,
@@ -329,7 +329,9 @@ async def generate_po_details(
         logger.error(f"Failed to uploadPo, Error saving file: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error saving file: {str(e)}")
     
-    poData = extractData(file_location)
+    #Need to supply the PO Mapping File path as well
+    poData = ExtractPOData.get_data_from_po(file_location)
+    
     os.remove(file_location)
     poNumber = poData.get('po_number')
     try:
