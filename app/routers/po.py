@@ -381,7 +381,7 @@ async def generate_po_details(
     for lineItem in poData.get("po_line_items"):
         toalRequestedItems = toalRequestedItems + int(lineItem.get('qty_requested'))
     try:
-        values = {"po_number": poData.get('po_number')+"abcdef5"}
+        values = {"po_number": poData.get('po_number')}
         poDetailsQuery = CHECK_PURCHASE_ORDER_EXIST.format(**values)
         poDetails = db.execute(text(poDetailsQuery)).mappings().all()
         if poDetails:
@@ -411,7 +411,7 @@ async def generate_po_details(
             'clientId': clientId,
             'evenflowCustomerMasterId': customerId,
             'toalRequestedItems': toalRequestedItems,
-            'poNumber': poData.get('po_number')+"abcdef5",
+            'poNumber': poData.get('po_number'),
             'poStatus': poData.get('status'),
             'vendor': poData.get('vendor'),
             'shipToLocation': poData.get('ship_to_location'),
