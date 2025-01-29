@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
+from app.helper.genericHelper import convertKeysToCamelCase
 from app.utils.logger  import logger
 from datetime import date
 from typing import List, Optional
@@ -32,7 +33,7 @@ def get_warehouse_details(
     try:
         result = db.execute(text(GET_WAREHOUSE_DETAILS)).mappings().all()
         return {
-            "wareHouseList": result,
+            "wareHouseList": convertKeysToCamelCase(result),
         }
     except Exception as e:
         logger.error(f"Failed to getWarehouseList: {e}")

@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 from app.utils.logger  import logger
+from app.helper.genericHelper import convertKeysToCamelCase
 from datetime import date
 from datetime import datetime
 from typing import List, Optional
@@ -27,6 +28,9 @@ from app.queries.purchaseOrder import (
 )
 from app.queries.purchaseItemLineItem import (
     INSERT_PURCHASE_ORDER_LINE_ITEM
+)
+from app.queries.customer import (
+    GET_CUSTOMER_ID_USING_CUSTOMER_NAME
 )
 
 load_dotenv()
@@ -132,7 +136,7 @@ def list_po(
     
     return {
         "poRecordCount": totalRecords,
-        "poRecords": result,
+        "poRecords": convertKeysToCamelCase(result),
     }
 
 @router.get("/poDetailsByPoNumber")
@@ -171,8 +175,8 @@ def get_po_details(
         raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
     
     return {
-        "poDetails": poDetails,
-        "poLineItemDetails": poLineItemDetails,
+        "poDetails": convertKeysToCamelCase(poDetails),
+        "poLineItemDetails": convertKeysToCamelCase(poLineItemDetails),
     }
 
 @router.post("/generatePoDetails", status_code=201, summary="Create new Purchase Orders") 
@@ -296,12 +300,12 @@ async def generate_po_details(
     authorization: str = Header(..., description="Bearer token for authentication", example="Bearer your_token_here"),
     file: UploadFile = File(...),
     clientId: str = Form(...), 
-    customerMasterId: str = Form(...),  
     db: Session = Depends(get_db)
 ):
     """
     Insert po details and po line Item details and upload to S3.
     """
+    MAX_FILE_SIZE = 10 * 1024 * 1024
     # Validate the authorization header
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=403, detail="Invalid Authorization header format")
@@ -312,6 +316,10 @@ async def generate_po_details(
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
     
+    if file.size > MAX_FILE_SIZE:
+        logger.error(f"Failed to upload, file size exceeds the allowed limit of {MAX_FILE_SIZE / (1024 * 1024)} MB")
+        raise HTTPException(status_code=400, detail="File size exceeds the allowed limit")
+    
     # Validate file type
     if file.content_type != 'application/pdf':
         logger.error(f"Failed to uploadPo, Only PDF files are allowed")
@@ -320,34 +328,44 @@ async def generate_po_details(
     FOLDER_PATH = os.getenv("UPLOAD_FOLDER")
     if not os.path.exists(FOLDER_PATH):
         os.makedirs(FOLDER_PATH)
-    file_location = os.path.join(FOLDER_PATH, file.filename)
+    poFileLocation = os.path.join(FOLDER_PATH, file.filename)
+
+    AWS_BUCKET_NAME = os.getenv("AWS_BUCKET_NAME")
+    AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY")
+    AWS_SECRET_KEY = os.getenv("AWS_SECRET_KEY")
+    AWS_REGION = os.getenv("AWS_REGION")
+    PO_MAPPING_FILE_S3_PATH = os.getenv("PO_MAPPING_FILE_S3_PATH")
+    
+    session = boto3.Session(
+        aws_access_key_id=AWS_ACCESS_KEY,
+        aws_secret_access_key=AWS_SECRET_KEY,
+        region_name=AWS_REGION
+    )
+    s3 = session.client('s3')
+    mappingFilePath = os.path.join(FOLDER_PATH, "evenflow-po-mappings.csv")
+    try:
+        s3.download_file(AWS_BUCKET_NAME, PO_MAPPING_FILE_S3_PATH, mappingFilePath)
+        print(f"Mapping file downloaded successfully to {mappingFilePath}")
+    except Exception as e:
+        logger.error(f"Failed to download, Error downloading file from S3: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error downloading file from S3: {str(e)}")
+    
     try:
         # Save the file to a local directory
-        with open(file_location, "wb") as buffer:
+        with open(poFileLocation, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
     except Exception as e:
         logger.error(f"Failed to uploadPo, Error saving file: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error saving file: {str(e)}")
     
     #Need to supply the PO Mapping File path as well
-    poData = ExtractPOData.get_data_from_po(file_location)
+    poData = ExtractPOData.get_data_from_po(poFileLocation, mappingFilePath)
     
-    os.remove(file_location)
+    os.remove(poFileLocation)
+    os.remove(mappingFilePath)
     poNumber = poData.get('po_number')
     try:
         buffer = BytesIO(await file.read()) 
-        AWS_BUCKET_NAME = os.getenv("AWS_BUCKET_NAME")
-        AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY")
-        AWS_SECRET_KEY = os.getenv("AWS_SECRET_KEY")
-        AWS_REGION = os.getenv("AWS_REGION")
-        
-        session = boto3.Session(
-            aws_access_key_id=AWS_ACCESS_KEY,
-            aws_secret_access_key=AWS_SECRET_KEY,
-            region_name=AWS_REGION
-        )
-        s3 = session.client('s3')
-
         currentDate = datetime.now() 
         response = s3.put_object(
             Bucket=AWS_BUCKET_NAME,
@@ -358,16 +376,23 @@ async def generate_po_details(
     except Exception as e:
         logger.error(f"Failed to uploadPo, Error uploading file to S3: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error uploading file to S3: {str(e)}")
-    
+
     toalRequestedItems = 0
     for lineItem in poData.get("po_line_items"):
-        toalRequestedItems = toalRequestedItems + int(lineItem.get('quantity_requested'))
+        toalRequestedItems = toalRequestedItems + int(lineItem.get('qty_requested'))
     try:
-        values = {"po_number": poData.get('po_number')}
+        values = {"po_number": poData.get('po_number')+"abcdef5"}
         poDetailsQuery = CHECK_PURCHASE_ORDER_EXIST.format(**values)
         poDetails = db.execute(text(poDetailsQuery)).mappings().all()
         if poDetails:
             raise HTTPException(status_code=409, detail="PO Number already exist")
+        
+        customerId = -1
+        values = {"customer_name": poData.get('purchasing_entity')}
+        customerDetailsQuery = GET_CUSTOMER_ID_USING_CUSTOMER_NAME.format(**values)
+        customerDetails = db.execute(text(customerDetailsQuery)).mappings().first()
+        if customerDetails:
+            customerId = customerDetails.get('id')
 
         formattedOrderedOn = datetime.strptime(poData.get('ordered_on'), "%m/%d/%Y").date()
         orderedOnMonth = formattedOrderedOn.month
@@ -382,21 +407,17 @@ async def generate_po_details(
         else:  # January to March
             orderedFiscalQuarter = "Q4"
 
-        shipWindowStartDate, shipWindowEndDate = poData.get('ship_window').split(" - ")
-        formattedShipWindowStartDate = datetime.strptime(shipWindowStartDate, "%d/%m/%Y").date().strftime("%Y-%m-%d")
-        formattedShipWindowEndDate = datetime.strptime(shipWindowEndDate, "%d/%m/%Y").date().strftime("%Y-%m-%d")
-
         poDetailsInputDict = {
             'clientId': clientId,
-            'evenflowCustomerMasterId': customerMasterId,
+            'evenflowCustomerMasterId': customerId,
             'toalRequestedItems': toalRequestedItems,
-            'poNumber': poData.get('po_number'),
+            'poNumber': poData.get('po_number')+"abcdef5",
             'poStatus': poData.get('status'),
             'vendor': poData.get('vendor'),
             'shipToLocation': poData.get('ship_to_location'),
             'orderedOn': formattedOrderedOn.strftime("%Y-%m-%d"),
-            'shipWindowFrom': formattedShipWindowStartDate,
-            'shipWindowTo': formattedShipWindowEndDate,
+            'shipWindowFrom': poData.get('ship_window_from'),
+            'shipWindowTo': poData.get('ship_window_to'),
             'freightTerms': poData.get('freight_terms'),
             'paymentMethod': poData.get('payment_method'),
             'paymentTerms': poData.get('payment_terms'),
@@ -426,20 +447,21 @@ async def generate_po_details(
         poDetails = db.execute(text(poDetailsQuery)).mappings().first()
 
         for lineItem in poData.get('po_line_items'):
+            print(lineItem)
             expectedDateFormatted = datetime.strptime(lineItem.get('expected_date'), "%m/%d/%Y").date().strftime("%Y-%m-%d")
             poLineItemDetailsInputDict = {
                 'evenflowPurchaseOrdersId': poDetails.id,
                 'asin': lineItem.get('asin'),
                 'externalId': lineItem.get('external_id'),
                 'modelNumber': lineItem.get('model_number'),
-                'hsn': 0 if lineItem.get('hsn') == "" else lineItem.get('hsn'),
+                'hsn': lineItem.get('hsn'),
                 'title': lineItem.get('title'),
                 'windowType': lineItem.get('window_type'),
                 'expectedDate': expectedDateFormatted,
-                'qtyRequested': lineItem.get('quantity_requested'),
-                'qtyAccepted': lineItem.get('accepted_quantity'),
-                'qtyReceived': lineItem.get('quantity_received'),
-                'qtyOutstanding': lineItem.get('quantity_outstanding'),
+                'qtyRequested': lineItem.get('qty_requested'),
+                'qtyAccepted': lineItem.get('qty_accepted'),
+                'qtyReceived': lineItem.get('qty_received'),
+                'qtyOutstanding': lineItem.get('qty_outstanding'),
                 'unitCost': float(lineItem.get('unit_cost').replace("INR", "").strip()),
                 'totalCost': float(lineItem.get('total_cost').replace("INR", "").strip()),
                 'activeFlag': 1,

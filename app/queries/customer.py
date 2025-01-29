@@ -8,3 +8,12 @@ GET_CUSTOMER_DETAILS = """
 	    id = '{customer_id}' and 
         active_flag = 1
 """
+
+GET_CUSTOMER_ID_USING_CUSTOMER_NAME = """
+    SELECT
+        id
+    FROM
+        evenflow_customer_master
+    WHERE 
+        customer_name = '{customer_name}'
+"""

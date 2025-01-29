@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 from app.utils.logger  import logger
+from app.helper.genericHelper import convertKeysToCamelCase
 from datetime import date
 from typing import List, Optional
 from app.dependencies import get_db
@@ -12,7 +13,8 @@ from app.queries.reportingDetails import (
     GET_PURCHASE_ORDER_TOP_CUSTOMERS_AGG_DETAILS,
     GET_INVOICES_TOP_CUSTOMERS_AGG_DETAILS,
     GET_INVOICES_AGG_DETAILS,
-    GET_PO_COUNT_DETAILS
+    GET_PO_COUNT_DETAILS,
+    GET_PRICE_DETAILS_FOR_KPI
 )
 
 router = APIRouter()
@@ -37,8 +39,8 @@ def get_warehouse_details(
         poAggDetails = db.execute(text(GET_PURCHASE_ORDER_AGG_DETAILS)).mappings().all()
         poTopCustomersAggDetails = db.execute(text(GET_PURCHASE_ORDER_TOP_CUSTOMERS_AGG_DETAILS)).mappings().all()
         return {
-            "poAggDetails": poAggDetails,
-            "poTopCustomersAggDetails": poTopCustomersAggDetails
+            "poAggDetails": convertKeysToCamelCase(poAggDetails), 
+            "poTopCustomersAggDetails": convertKeysToCamelCase(poTopCustomersAggDetails)
         }
     except Exception as e:
         logger.error(f"Failed to getPurchaseOrderReportingDetails: {e}")
@@ -64,8 +66,8 @@ def get_warehouse_details(
         invoicesAggDetails = db.execute(text(GET_INVOICES_AGG_DETAILS)).mappings().all()
         invoicesTopCustomersAggDetails = db.execute(text(GET_INVOICES_TOP_CUSTOMERS_AGG_DETAILS)).mappings().all()
         return {
-            "invoicesAggDetails": invoicesAggDetails,
-            "invoicesTopCustomersAggDetails": invoicesTopCustomersAggDetails
+            "invoicesAggDetails": convertKeysToCamelCase(invoicesAggDetails),
+            "invoicesTopCustomersAggDetails": convertKeysToCamelCase(invoicesTopCustomersAggDetails)
         }
     except Exception as e:
         logger.error(f"Failed to getInvoicesReportingDetails: {e}")
@@ -89,9 +91,11 @@ def get_warehouse_details(
         logger.error(f"Failed to getPoCountsForReporting: {e}")
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
     try:
-        poCountDetails = db.execute(text(GET_PO_COUNT_DETAILS)).mappings().all()
+        poCountDetails = db.execute(text(GET_PO_COUNT_DETAILS)).mappings().first()
+        priceDetails = db.execute(text(GET_PRICE_DETAILS_FOR_KPI)).mappings().first()
         return {
             "poCountDetails": poCountDetails,
+            "amountDetails": priceDetails
         }
     except Exception as e:
         logger.error(f"Failed to getPoCountsForReporting: {e}")
