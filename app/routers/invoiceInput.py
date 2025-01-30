@@ -1,4 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi.security import HTTPBearer
+from app.models import User
+from app.security import validate_token
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
@@ -6,7 +9,7 @@ from app.utils.logger  import logger
 from datetime import date
 from typing import List, Optional
 from app.dependencies import get_db
-from app.security import decode_access_token
+#from app.security import decode_access_token
 from app.queries.customer import (
     GET_CUSTOMER_DETAILS
 )
@@ -29,6 +32,8 @@ from app.queries.invoieInput import (
 )
 
 router = APIRouter()
+security_scheme = HTTPBearer()
+
 
 # Pydantic Model for each item
 class CreateInvoiceInputRequest(BaseModel):
@@ -62,7 +67,8 @@ class CreateInvoiceInputRequest(BaseModel):
 def create_invoice_input(
     requests: List[CreateInvoiceInputRequest],  # Accepts a list of objects
     db: Session = Depends(get_db),
-    authorization: str = Header(..., description="Bearer token for authentication", example="Bearer your_token_here")
+    current_user: str = Depends(security_scheme),
+    authorization: str = Header(None, description="Bearer token for authentication")
 ):
     """
     Create new Invoice input from an array of input objects.
@@ -71,9 +77,10 @@ def create_invoice_input(
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Unauthorized")
     
+    token = authorization.split(" ")[1]
+    payload = validate_token(token, db)
     try:
-        decoded_details = decode_access_token(authorization.split(" ")[1])
-        logger.info("Request received for /generateInvoiceInputs from-"+decoded_details.get('user_login_id'))
+        logger.info(f"Request received for /poListing from - {payload.get('user_login_id')}")
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
 
@@ -92,12 +99,28 @@ def create_invoice_input(
             values = {"po_number": request.poNumber}
             GET_PURCHASE_ORDER_DETAILS_FORMATTED = GET_PURCHASE_ORDER_DETAILS.format(**values) 
             purchaseOrderDetails = db.execute(text(GET_PURCHASE_ORDER_DETAILS_FORMATTED)).mappings().first()
+            
+            # Fetching accounting details for the given clientId
+            logger.info(f"Fetching accounting details for clientId {request.clientId}")
             values = {"client_id": request.clientId}
-            GET_ACCOUNTING_DETAILS_FORMATTED = GET_ACCOUNTING_DETAILS.format(**values) 
+            GET_ACCOUNTING_DETAILS_FORMATTED = GET_ACCOUNTING_DETAILS.format(**values)
             accountingDetails = db.execute(text(GET_ACCOUNTING_DETAILS_FORMATTED)).mappings().first()
+
+            # Log the accounting details result
+            logger.info(f"Accounting details for clientId {request.clientId}: {accountingDetails}")
+            
+            if not accountingDetails:
+                logger.error(f"Accounting details not found for clientId {request.clientId}")
+                raise HTTPException(status_code=404, detail=f"Accounting details not found for clientId {request.clientId}")
+            
             values = {'order_id': purchaseOrderDetails.evenflow_purchase_orders_id, 'sku': request.sku}
             GET_PURCHASE_ORDER_LINE_ITEM_FORMATTED = GET_PURCHASE_ORDER_LINE_ITEM.format(**values) 
             purchaseOrderLineItemDetails = db.execute(text(GET_PURCHASE_ORDER_LINE_ITEM_FORMATTED)).mappings().first()
+            
+            # Check if purchaseOrderLineItemDetails is None
+            if purchaseOrderLineItemDetails is None:
+                raise HTTPException(status_code=404, detail=f"Purchase order line item not found for PO {request.poNumber} and SKU {request.sku}")
+
             orderedDate = purchaseOrderDetails.ordered_on
 
             lineItemQtySatisfy = 'FULFILLED'
@@ -113,6 +136,7 @@ def create_invoice_input(
                 orderedFiscalQuarter = "Q3"
             else:  # January to March
                 orderedFiscalQuarter = "Q4"
+            
             invoiceInputDict = {
                 'clientId': request.clientId,
                 'evenflowCustomerMasterId': request.customerMasterId,
@@ -155,7 +179,7 @@ def create_invoice_input(
                 'boxNumber': request.boxNumber,
                 'totalBoxCount': request.totalBoxCount,
                 'activeFlag': 1,
-                'createdBy': decoded_details.get('user_login_id'),
+                'createdBy': payload.get('user_login_id'),
                 'otherWarehouseName': request.otherWarehouseName,
                 'otherWarehouseAddressLine1': request.otherWarehouseAddressLine1,
                 'otherWarehouseAddressLine2': request.otherWarehouseAddressLine2,
@@ -169,12 +193,10 @@ def create_invoice_input(
 
             values = {'purchase_orders_id': purchaseOrderDetails.evenflow_purchase_orders_id, 'sku': request.sku, 'po_status': lineItemQtySatisfy}
             UPDATE_PURCHASE_ORDER_LINE_ITEM_FORMATTED = UPDATE_PURCHASE_ORDER_LINE_ITEM.format(**values)
-            print(UPDATE_PURCHASE_ORDER_LINE_ITEM_FORMATTED)
             db.execute(text(UPDATE_PURCHASE_ORDER_LINE_ITEM_FORMATTED))
 
         values = { 'po_number': purchaseOrderNumber, 'po_status': allOrderQtySatisfiedFlag }
         UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED = UPDATE_PURCHASE_ORDER_DETAILS.format(**values)
-        print(UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED)
         db.execute(text(UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED))
         db.commit()
         return {"message": "Invoice line item created successfully"}

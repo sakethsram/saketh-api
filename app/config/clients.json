@@ -2,7 +2,7 @@
     "clients": [
         {
             "name": "ecommerce",
-            "db_url": "postgresql://postgres:root@localhost/postgres"
+            "db_url": "postgresql://dataworkx:jnjnuh@localhost/ecommate"
         }
     ]
 }

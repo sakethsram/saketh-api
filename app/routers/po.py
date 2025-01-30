@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from fastapi.security import HTTPBearer
 import shutil
 import boto3
 from io import BytesIO
@@ -13,7 +14,10 @@ from datetime import date
 from datetime import datetime
 from typing import List, Optional
 from app.dependencies import get_db
-from app.security import decode_access_token
+from app.security import validate_token
+from app.models import User
+import fitz
+#from app.security import decode_access_token
 from app.automationscript.poAutomation import ExtractPOData
 from app.queries.po import (
     FETCH_PO_LISTING_QUERY,
@@ -35,6 +39,7 @@ from app.queries.customer import (
 
 load_dotenv()
 router = APIRouter()
+security_scheme = HTTPBearer()
 
 class CreateInvoiceInputRequest(BaseModel):
     poNumber: str = Field(..., description="Purchase Order Number", example="PO12345")
@@ -91,29 +96,29 @@ class CreatePORequest(BaseModel):
 
 @router.get("/poListing")
 def list_po(
-    pageSize: int = Query(10, description="Number of rows per page", ge=1),  # Default: 10, minimum value: 1
-    pageNumber: int = Query(1, description="Page number to fetch", ge=1),   # Default: 1, minimum value: 1
+    pageSize: int = Query(10, description="Number of rows per page", ge=1),
+    pageNumber: int = Query(1, description="Page number to fetch", ge=1),
     poNumber: Optional[str] = Query(None, description="Filter by PO Number"),
     startDate: Optional[str] = Query(None, description="Start date filter (YYYY-MM-DD)"),
     endDate: Optional[str] = Query(None, description="End date filter (YYYY-MM-DD)"),
     db: Session = Depends(get_db),
-    authorization: str = Header(..., description="Bearer token for authentication", example="Bearer your_token_here")
+    current_user: str = Depends(security_scheme),
+    authorization: str = Header(None, description="Bearer token for authentication")
 ):
     """
     Fetch purchase order listing with filters.
     """
-    # Validate Authorization Header
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=403, detail="Invalid Authorization header format")
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=403, detail="Authorization header missing or invalid")
     
-    # Decode token
+    token = authorization.split(" ")[1]
+    payload = validate_token(token, db)
+    
     try:
-        decoded_details = decode_access_token(authorization.split(" ")[1])
-        logger.info("Request received for /poListing from-"+decoded_details.get('user_login_id'))
+        logger.info(f"Request received for /poListing from - {payload.get('user_login_id')}")
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
     
-    # Build WHERE conditions
     condition = ""
     if poNumber:
         condition += f" WHERE RESULT.po_number = '{poNumber}' "
@@ -122,7 +127,6 @@ def list_po(
     if endDate:
         condition += f"{'AND' if condition else 'WHERE'} RESULT.po_created <= '{endDate}' "
     
-    # Prepare queries
     values = {"page_size": pageSize, "page_number": pageNumber, "whereCondition": condition}
     FETCH_PO_LISTING_QUERY_FORMATED = FETCH_PO_LISTING_QUERY.format(**values)
     FETCH_TOTAL_COUNT_PO_LISTING_QUERY_FORMATED = FETCH_TOTAL_COUNT_PO_LISTING_QUERY.format(**values)
@@ -144,19 +148,20 @@ def get_po_details(
     poNumber: str = Query(..., description="PO Number to fetch details"),
     fulfilledItemRequired: int = Query(..., description="Completed Item Required to fetch details"),
     db: Session = Depends(get_db),
+    current_user: User = Depends(security_scheme),
     authorization: str = Header(..., description="Bearer token for authentication", example="Bearer your_token_here")
 ):
     """
     Fetch purchase order details and line items by PO Number.
     """
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=403, detail="Invalid Authorization header format")
-    
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=403, detail="Authorization header missing or invalid")
+
+    token = authorization.split(" ")[1]
+    payload = validate_token(token, db)
     try:
-        decoded_details = decode_access_token(authorization.split(" ")[1])
-        logger.info("Request received for /poDetailsByPoNumber from-"+decoded_details.get('user_login_id'))
+        logger.info(f"Request received for /poListing from - {payload.get('user_login_id')}")
     except Exception as e:
-        logger.error(f"Failed to poDetailsByPoNumber : {e}")
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
     
     values = {"po_number": poNumber}
@@ -171,7 +176,7 @@ def get_po_details(
         poDetails = db.execute(text(poDetailsQuery)).mappings().first()
         poLineItemDetails = db.execute(text(poLineItemDetailsQuery)).mappings().all()
     except Exception as e:
-        logger.error(f"Failed to poDetailsByPoNumber: {e}")
+        logger.error(f"Failed to get PO details: {e}")
         raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
     
     return {
@@ -179,10 +184,12 @@ def get_po_details(
         "poLineItemDetails": convertKeysToCamelCase(poLineItemDetails),
     }
 
+
 @router.post("/generatePoDetails", status_code=201, summary="Create new Purchase Orders") 
 def generate_po_details(
     request: CreatePORequest,  # Accepts a list of objects
     db: Session = Depends(get_db),
+    current_user: User = Depends(security_scheme),
     authorization: str = Header(..., description="Bearer token for authentication", example="Bearer your_token_here")
 ):
     """
@@ -191,9 +198,11 @@ def generate_po_details(
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=403, detail="Invalid Authorization header format")
     
+    token = authorization.split(" ")[1]
+    payload = validate_token(token, db)
+
     try:
-        decoded_details = decode_access_token(authorization.split(" ")[1])
-        logger.info("Request received for /generatePoDetails from-"+decoded_details.get('user_login_id'))
+        logger.info(f"Request received for /poListing from - {payload.get('user_login_id')}")
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
     
@@ -257,7 +266,7 @@ def generate_po_details(
             'poMonth': orderedOnMonth,
             'poYear': orderedOnYear,
             'activeFlag': 1,
-            'createdBy': decoded_details.get('user_login_id')
+            'createdBy': payload.get('user_login_id')
         }
         generate_po_query = text(INSERT_PURCHASE_ORDER_DETAILS)
         db.execute(generate_po_query, poDetailsInputDict)
@@ -281,7 +290,7 @@ def generate_po_details(
                 'unitCost': float(lineItem.unit_cost.replace("INR", "").strip()),
                 'totalCost': float(lineItem.total_cost.replace("INR", "").strip()),
                 'activeFlag': 1,
-                'createdBy': decoded_details.get('user_login_id')
+                'createdBy': payload.get('user_login_id')
             }
             generate_po_line_item_query = text(INSERT_PURCHASE_ORDER_LINE_ITEM)
             db.execute(generate_po_line_item_query, poLineItemDetailsInputDict)
@@ -297,10 +306,11 @@ def generate_po_details(
 
 @router.post("/uploadPo", status_code=200, summary="Upload Purchase Orders pdf file")
 async def generate_po_details(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(security_scheme),
     authorization: str = Header(..., description="Bearer token for authentication", example="Bearer your_token_here"),
     file: UploadFile = File(...),
     clientId: str = Form(...), 
-    db: Session = Depends(get_db)
 ):
     """
     Insert po details and po line Item details and upload to S3.
@@ -310,11 +320,13 @@ async def generate_po_details(
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=403, detail="Invalid Authorization header format")
     
+    token = authorization.split(" ")[1]
+    payload = validate_token(token, db)
     try:
-        decoded_details = decode_access_token(authorization.split(" ")[1])
-        logger.info("Request received for /uploadPo from-"+decoded_details.get('user_login_id'))
+        logger.info(f"Request received for /poListing from - {payload.get('user_login_id')}")
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+
     
     if file.size > MAX_FILE_SIZE:
         logger.error(f"Failed to upload, file size exceeds the allowed limit of {MAX_FILE_SIZE / (1024 * 1024)} MB")
@@ -440,7 +452,7 @@ async def generate_po_details(
             'poMonth': orderedOnMonth,
             'poYear': orderedOnYear,
             'activeFlag': 1,
-            'createdBy': decoded_details.get('user_login_id')
+            'createdBy': payload.get('user_login_id')
         }
         generate_po_query = text(INSERT_PURCHASE_ORDER_DETAILS)
         db.execute(generate_po_query, poDetailsInputDict)
@@ -465,7 +477,7 @@ async def generate_po_details(
                 'unitCost': float(lineItem.get('unit_cost').replace("INR", "").strip()),
                 'totalCost': float(lineItem.get('total_cost').replace("INR", "").strip()),
                 'activeFlag': 1,
-                'createdBy': decoded_details.get('user_login_id')
+                'createdBy': payload.get('user_login_id')
             }
             generate_po_line_item_query = text(INSERT_PURCHASE_ORDER_LINE_ITEM)
             db.execute(generate_po_line_item_query, poLineItemDetailsInputDict)
