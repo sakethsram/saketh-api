@@ -1,6 +1,10 @@
 from pydantic import BaseModel
 from pydantic import HttpUrl
 from typing import Optional
+from typing import List
+from datetime import datetime
+
+
 
 class UserBase(BaseModel):
     username: str
