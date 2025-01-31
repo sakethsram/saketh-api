@@ -1,0 +1,5 @@
+app.log
+app/__pycache__
+app/config/__pycache__
+app/routers/__pycache__
+app/queries/__pycache__
