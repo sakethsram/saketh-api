@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-from app.routers import po, invoiceInput, warehouse, reportingDetails
 from app.routers import auth, users
 from app.routers import get_distys
 from app.routers import common
@@ -60,9 +59,4 @@ app.include_router(users.router)
 app.include_router(get_distys.router)
 app.include_router(client_onboard.router)
 app.include_router(common.router)
-app.include_router(po.router)
-app.include_router(invoiceInput.router)
-app.include_router(warehouse.router)
-app.include_router(reportingDetails.router)
-
 logging.debug("Debugging initialized")

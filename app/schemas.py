@@ -4,8 +4,6 @@ from typing import Optional
 from typing import List
 from datetime import datetime
 
-
-
 class UserBase(BaseModel):
     username: str
     role: str
@@ -43,6 +41,7 @@ class AccountingToolDetails(BaseModel):
     
     class Config:
         orm_mode = True  # This allows Pydantic to work with ORM models directly
+
 
 class ClientOnboardingRequest(BaseModel):
     b2b_distributors: List[DistyInput]
@@ -100,3 +99,4 @@ class ClientOnboardRequest(BaseModel):
     po_mapping: List[MappingItem]
     itemmaster_mapping: List[MappingItem]
     customermaster_mapping: List[MappingItem]
+     

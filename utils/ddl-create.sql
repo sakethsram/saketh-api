@@ -737,13 +737,10 @@ CREATE TABLE roles_feature_privileges (
 	CONSTRAINT fk_roles_feature_privileges_3 FOREIGN KEY (feature_privileges_id) REFERENCES feature_privileges(id)
 );
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+CREATE TABLE user_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    token TEXT NOT NULL,
+    created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user_tokens_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
