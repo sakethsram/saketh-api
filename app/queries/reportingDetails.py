@@ -48,8 +48,8 @@ GET_INVOICES_TOP_CUSTOMERS_AGG_DETAILS = """
 
 GET_PRICE_DETAILS_FOR_KPI = """
     SELECT
-        SUM(CASE WHEN po_line_item_processing_status = 'FULFILLED' THEN item_price ELSE 0 END) AS fulfilledPrice,
-        SUM(CASE WHEN po_line_item_processing_status = 'OPEN' THEN item_price ELSE 0 END) AS openPrice
+        SUM(CASE WHEN po_line_item_processing_status = 'FULFILLED' THEN quantity*item_price ELSE 0 END) AS fulfilledPrice,
+        SUM(CASE WHEN po_line_item_processing_status = 'OPEN' THEN quantity*item_price ELSE 0 END) AS openPrice
     FROM 
         evenflow_invoice_inputs;
 """

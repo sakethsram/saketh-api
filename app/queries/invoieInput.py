@@ -3,7 +3,7 @@ CREATE_INVOICE_INPUT = """
         evenflow_invoice_inputs (
 	        client_id, evenflow_customer_master_id, evenflow_product_master_id, invoice_status, 
             customer_name, gst_treatment, tcs_tax_name, tcs_percentage, 
-            gstin, place_of_supply, purchase_order_number, evenflow_purchase_orders_id,  
+            gstin, place_of_supply, purchase_order_number, evenflow_purchase_orders_line_items_id, evenflow_purchase_orders_id,  
             payment_terms, payment_terms_label, expected_date, account, 
             item_name, sku, item_desc, item_type, 
             hsn_sac, quantity, usage_unit, item_price, 
@@ -19,7 +19,7 @@ CREATE_INVOICE_INPUT = """
 	    VALUES (
 		    :clientId, :evenflowCustomerMasterId, :evenflowProductMasterId, :invoiceStatus,
 		    :customerName, :gstTreatment, :tcsTaxName, :tcsPercentage, 
-            :gstin, :placeOfSupply, :poNumber, :evenflowPurchaseOrdersId,
+            :gstin, :placeOfSupply, :poNumber, :poLineItemId, :evenflowPurchaseOrdersId,
 		    :paymentTerms, :paymentTermsLabel, :expectedDate, :account, 
             :itemName, :sku, :itemDesc, :itemType,
 		    :hsnSac, :quantity, :usageUnit, :itemPrice,

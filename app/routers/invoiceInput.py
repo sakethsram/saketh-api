@@ -40,6 +40,7 @@ class CreateInvoiceInputRequest(BaseModel):
     clientId: int = Field(..., description="Client Id", example=1)
     customerMasterId: int = Field(..., description="Customer master Id", example=1)
     poNumber: str = Field(..., description="Purchase Order Number", example="PO12345")
+    poLineItemId: int = Field(..., description="po line item id", example = 1)
     ASIN:  str = Field(..., description="ASIN", example="ASIN number")
     sku: str = Field(..., description="SKU", example="SKU number")
     appointmentId: int = Field(..., description="appoinment id", example=101)
@@ -149,6 +150,7 @@ def create_invoice_input(
                 'gstin': customerInfo.gst_identification_number,
                 'placeOfSupply': request.placeOfSupply,
                 'poNumber': request.poNumber,
+                'poLineItemId': request.poLineItemId, #added by Ikshwak jan 31st
                 'evenflowPurchaseOrdersId': purchaseOrderDetails.evenflow_purchase_orders_id,
                 'paymentTerms': customerInfo.payment_terms,
                 'paymentTermsLabel': customerInfo.payment_terms_label,

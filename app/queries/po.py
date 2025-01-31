@@ -176,6 +176,7 @@ PO_DETAILS_QUERY_BY_PO_NUMBER = """
 PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER_WITHOUT_FULFILLED = """
     SELECT
         '{po_number}' as po_number,
+        poli.id,
 	    asin,
 	    external_id,
 	    model_number,
@@ -204,6 +205,7 @@ PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER_WITHOUT_FULFILLED = """
 PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER_WITH_FULFILLED = """
     SELECT
         '{po_number}' as po_number,
+        poli.id,
 	    asin,
 	    external_id,
 	    model_number,

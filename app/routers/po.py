@@ -310,7 +310,7 @@ async def generate_po_details(
     current_user: User = Depends(security_scheme),
     authorization: str = Header(..., description="Bearer token for authentication", example="Bearer your_token_here"),
     file: UploadFile = File(...),
-    clientId: str = Form(...), 
+    clientId: str = Form(...),
 ):
     """
     Insert po details and po line Item details and upload to S3.
@@ -327,7 +327,6 @@ async def generate_po_details(
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
 
-    
     if file.size > MAX_FILE_SIZE:
         logger.error(f"Failed to upload, file size exceeds the allowed limit of {MAX_FILE_SIZE / (1024 * 1024)} MB")
         raise HTTPException(status_code=400, detail="File size exceeds the allowed limit")
@@ -370,12 +369,13 @@ async def generate_po_details(
         logger.error(f"Failed to uploadPo, Error saving file: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error saving file: {str(e)}")
     
-    #Need to supply the PO Mapping File path as well
+    # Need to supply the PO Mapping File path as well
     poData = ExtractPOData.get_data_from_po(poFileLocation, mappingFilePath)
     
     os.remove(poFileLocation)
     os.remove(mappingFilePath)
     poNumber = poData.get('po_number')
+    
     try:
         buffer = BytesIO(await file.read()) 
         currentDate = datetime.now() 
@@ -397,7 +397,7 @@ async def generate_po_details(
         poDetailsQuery = CHECK_PURCHASE_ORDER_EXIST.format(**values)
         poDetails = db.execute(text(poDetailsQuery)).mappings().all()
         if poDetails:
-            raise HTTPException(status_code=409, detail="PO Number already exist")
+            raise HTTPException(status_code=409, detail="PO Number already exists")
         
         customerId = -1
         values = {"customer_name": poData.get('purchasing_entity')}
@@ -459,26 +459,24 @@ async def generate_po_details(
         poDetails = db.execute(text(poDetailsQuery)).mappings().first()
 
         for lineItem in poData.get('po_line_items'):
-            print(lineItem)
             expectedDateFormatted = datetime.strptime(lineItem.get('expected_date'), "%m/%d/%Y").date().strftime("%Y-%m-%d")
             poLineItemDetailsInputDict = {
-                'evenflowPurchaseOrdersId': poDetails.id,
-                'asin': lineItem.get('asin'),
-                'externalId': lineItem.get('external_id'),
-                'modelNumber': lineItem.get('model_number'),
-                'hsn': lineItem.get('hsn'),
-                'title': lineItem.get('title'),
-                'windowType': lineItem.get('window_type'),
-                'expectedDate': expectedDateFormatted,
-                'qtyRequested': lineItem.get('qty_requested'),
-                'qtyAccepted': lineItem.get('qty_accepted'),
-                'qtyReceived': lineItem.get('qty_received'),
-                'qtyOutstanding': lineItem.get('qty_outstanding'),
-                'unitCost': float(lineItem.get('unit_cost').replace("INR", "").strip()),
-                'totalCost': float(lineItem.get('total_cost').replace("INR", "").strip()),
-                'activeFlag': 1,
-                'createdBy': payload.get('user_login_id')
-            }
+            'evenflowPurchaseOrdersId': poDetails.id,
+            'externalId': lineItem.get('external_id'),
+            'modelNumber': lineItem.get('model_number'),
+            'hsn': lineItem.get('hsn') if lineItem.get('hsn') else None,  # Handle empty hsn
+            'title': lineItem.get('title'),
+            'windowType': lineItem.get('window_type'),
+            'expectedDate': expectedDateFormatted,
+            'qtyRequested': int(lineItem.get('qty_requested')) if lineItem.get('qty_requested').isdigit() else 0,  # Ensure qtyRequested is an integer
+            'qtyAccepted': int(lineItem.get('qty_accepted')) if lineItem.get('qty_accepted').isdigit() else 0,  # Ensure qtyAccepted is an integer
+            'qtyReceived': int(lineItem.get('qty_received')) if lineItem.get('qty_received').isdigit() else 0,  # Ensure qtyReceived is an integer
+            'qtyOutstanding': int(lineItem.get('qty_outstanding')) if lineItem.get('qty_outstanding').isdigit() else 0,  # Ensure qtyOutstanding is an integer
+            'unitCost': float(lineItem.get('unit_cost').replace("INR", "").strip()) if lineItem.get('unit_cost') else 0.0,  # Ensure unitCost is a float
+            'totalCost': float(lineItem.get('total_cost').replace("INR", "").strip()) if lineItem.get('total_cost') else 0.0,  # Ensure totalCost is a float
+            'activeFlag': 1,
+            'createdBy': payload.get('user_login_id')
+}
             generate_po_line_item_query = text(INSERT_PURCHASE_ORDER_LINE_ITEM)
             db.execute(generate_po_line_item_query, poLineItemDetailsInputDict)
 
@@ -493,4 +491,3 @@ async def generate_po_details(
         db.rollback()
         logger.error(f"Failed to uploadPo, Error is: {str(e)}")
         raise HTTPException(status_code=500, detail="Something went wrong. Please try again. error is:"+str(e))
-
