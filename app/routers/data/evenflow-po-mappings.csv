@@ -1,0 +1,46 @@
+SourceField,TargetField,SampleValue
+PO,header.po_number,7VTEZRNB
+Status,header.po_status,Closed
+Vendor,header.vendor,EV7CR
+Ship to Location,header.ship_to_location,"BLR4 - BENGALURU, KARNATAKA"
+Ordered On,header.ordered_on,11/20/2024
+Ship window,header.ship_window_from,21-11-2024
+Ship window,header.ship_window_to,01-01-2025
+Freight terms,header.freight_terms,Prepaid
+Payment Method,header.payment_method,Invoice
+Payment terms,header.payment_terms,NET DUE IN 45 DAYS
+Purchasing entity,header.purchasing_entity,RETAILEZ PRIVATE LIMITED
+Submitted (Items),header.submitted_items,2
+Submitted (Quantity Submitted),header.submitted_qty,82
+Submitted (Total cost),header.submitted_total_cost,37526.00 INR
+Accepted (Items),header.accepted_items,2
+Accepted (Quantity Submitted),header.accepted_qty,82
+Accepted (Total cost),header.accepted_total_cost,37526.00 INR
+Cancelled (Items),header.cancelled_items,0
+Cancelled (Quantity Submitted),header.cancelled_qty,0
+Cancelled (Total cost),header.cancelled_total_cost,0.00 INR
+Received (Items),header.received_items,2
+Received (Quantity Submitted),header.received_qty,82
+Received (Total cost),header.received_total_cost,37526.00 INR
+Delivery Address,header.delivery_address_to,BLR4
+Delivery Address,header.delivery_address,"RETAILEZ PRIVATE LIMITED
+Plot No. 12 P2,
+Hitech, Defence and Aerospace Park, Devanahalli
+BENGALURU 562149
+India"
+ASIN,lineitem.asin,B0D95SFFL9
+External id,lineitem.external_id,"EAN:
+890615736556"
+Model Number,lineitem.model_number,XTR-GM-GRY-P4
+HSN,lineitem.hsn,95049090
+Title,lineitem.title,"Xtrim Puzzle Exercise Mat (4 Tiles & 8 Borders, 16 Sq.Ft. Area) High-Density EVA Foam Mat,
+Interlocking Tiles, Shock Proof, Protective Flooring for Gym Equipment, Puzzle Foam Mat"
+Window Type,lineitem.window_type,"Delivery window
+(Prepaid)"
+Expected date,lineitem.expected_date,11/21/2024
+Quantity Requested,lineitem.qty_requested,52
+Accepted quantity,lineitem.qty_accepted,52
+Quantity received,lineitem.qty_received,52
+Quantity Outstanding,lineitem.qty_outstanding,0
+Unit Cost,lineitem.unit_cost,533 INR
+Total cost,lineitem.total_cost,27716 INR

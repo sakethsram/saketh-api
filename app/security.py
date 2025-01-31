@@ -1,7 +1,6 @@
 from fastapi import HTTPException
 import jwt
 from datetime import datetime, timedelta
-from passlib.context import CryptContext
 import jwt
 from sqlalchemy.orm import Session
 from app.models import UserTokens
