@@ -251,16 +251,16 @@ def generate_po_details(
             'purchasingEntity': request.purchasing_entity,
             'submittedItems': request.submitted_items,
             'submittedQty': request.submitted_quantity_submitted,
-            'submittedTotalCost': float(request.submitted_total_cost.replace("INR", "").strip()),
+            'submittedTotalCost': float(request.submitted_total_cost.replace("INR", "").strip().replace(" ", "")),
             'acceptedItems': request.accepted_items,
             'acceptedQty': request.accepted_quantity_submitted,
-            'acceptedTotalCost': float(request.accepted_total_cost.replace("INR", "").strip()),
+            'acceptedTotalCost': float(request.accepted_total_cost.replace("INR", "").strip().replace(" ", "")),
             'cancelledItems': request.cancelled_items,
             'cancelledQty': request.cancelled_quantity_submitted,
-            'cancelledTotalCost': float(request.cancelled_total_cost.replace("INR", "").strip()),
+            'cancelledTotalCost': float(request.cancelled_total_cost.replace("INR", "").strip().replace(" ", "")),
             'receivedItems': request.received_items,
             'receivedQty': request.received_quantity_submitted,
-            'receivedTotalCost': float(request.received_total_cost.replace("INR", "").strip()),
+            'receivedTotalCost': float(request.received_total_cost.replace("INR", "").strip().replace(" ", "")),
             'deliveryAddressTo': request.delivery_address_code,
             'deliveryAddress': request.delivery_address,
             'fiscalQuarter': orderedFiscalQuarter,
@@ -274,7 +274,9 @@ def generate_po_details(
         poDetails = db.execute(text(poDetailsQuery)).mappings().first()
 
         for lineItem in request.po_line_items:
-            expectedDateFormatted = datetime.strptime(lineItem.expected_date, "%m/%d/%Y").date().strftime("%Y-%m-%d")
+            expectedDateFormatted = None
+            if(lineItem.expected_date != ''):
+                expectedDateFormatted = datetime.strptime(lineItem.expected_date, "%m/%d/%Y").date().strftime("%Y-%m-%d")
             poLineItemDetailsInputDict = {
                 'evenflowPurchaseOrdersId': poDetails.id,
                 'asin': lineItem.asin,
@@ -288,8 +290,8 @@ def generate_po_details(
                 'qtyAccepted': lineItem.accepted_quantity,
                 'qtyReceived': lineItem.quantity_received,
                 'qtyOutstanding': lineItem.quantity_outstanding,
-                'unitCost': float(lineItem.unit_cost.replace("INR", "").strip()),
-                'totalCost': float(lineItem.total_cost.replace("INR", "").strip()),
+                'unitCost': float(lineItem.unit_cost.replace("INR", "").strip().replace(" ", "")),
+                'totalCost': float(lineItem.total_cost.replace("INR", "").strip().replace(" ", "")),
                 'activeFlag': 1,
                 'createdBy': payload.get('user_login_id')
             }
@@ -439,16 +441,16 @@ async def generate_po_details(
             'purchasingEntity': poData.get('purchasing_entity'),
             'submittedItems': poData.get('submitted_items'),
             'submittedQty': poData.get('submitted_quantity_submitted'),
-            'submittedTotalCost': float(poData.get('submitted_total_cost').replace("INR", "").strip()),
+            'submittedTotalCost': float(poData.get('submitted_total_cost').replace("INR", "").strip().replace(" ", "")),
             'acceptedItems': poData.get('accepted_items'),
             'acceptedQty': poData.get('accepted_quantity_submitted'),
-            'acceptedTotalCost': float(poData.get('accepted_total_cost').replace("INR", "").strip()),
+            'acceptedTotalCost': float(poData.get('accepted_total_cost').replace("INR", "").strip().replace(" ", "")),
             'cancelledItems': poData.get('cancelled_items'),
             'cancelledQty': poData.get('cancelled_quantity_submitted'),
-            'cancelledTotalCost': float(poData.get('cancelled_total_cost').replace("INR", "").strip()),
+            'cancelledTotalCost': float(poData.get('cancelled_total_cost').replace("INR", "").strip().replace(" ", "")),
             'receivedItems': poData.get('received_items'),
             'receivedQty': poData.get('received_quantity_submitted'),
-            'receivedTotalCost': float(poData.get('received_total_cost').replace("INR", "").strip()),
+            'receivedTotalCost': float(poData.get('received_total_cost').replace("INR", "").strip().replace(" ", "")),
             'deliveryAddressTo': poData.get('delivery_address_code'),
             'deliveryAddress': poData.get('delivery_address'),
             'fiscalQuarter': orderedFiscalQuarter,
@@ -462,7 +464,9 @@ async def generate_po_details(
         poDetails = db.execute(text(poDetailsQuery)).mappings().first()
 
         for lineItem in poData.get('po_line_items'):
-            expectedDateFormatted = datetime.strptime(lineItem.get('expected_date'), "%m/%d/%Y").date().strftime("%Y-%m-%d")
+            expectedDateFormatted = None
+            if(lineItem.get('expected_date') != ''):
+                expectedDateFormatted = datetime.strptime(lineItem.get('expected_date'), "%m/%d/%Y").date().strftime("%Y-%m-%d")
             poLineItemDetailsInputDict = {
             'evenflowPurchaseOrdersId': poDetails.id,
             'externalId': lineItem.get('external_id'),
@@ -475,8 +479,8 @@ async def generate_po_details(
             'qtyAccepted': int(lineItem.get('qty_accepted')) if lineItem.get('qty_accepted').isdigit() else 0,  # Ensure qtyAccepted is an integer
             'qtyReceived': int(lineItem.get('qty_received')) if lineItem.get('qty_received').isdigit() else 0,  # Ensure qtyReceived is an integer
             'qtyOutstanding': int(lineItem.get('qty_outstanding')) if lineItem.get('qty_outstanding').isdigit() else 0,  # Ensure qtyOutstanding is an integer
-            'unitCost': float(lineItem.get('unit_cost').replace("INR", "").strip()) if lineItem.get('unit_cost') else 0.0,  # Ensure unitCost is a float
-            'totalCost': float(lineItem.get('total_cost').replace("INR", "").strip()) if lineItem.get('total_cost') else 0.0,  # Ensure totalCost is a float
+            'unitCost': float(lineItem.get('unit_cost').replace("INR", "").strip().replace(" ", "")) if lineItem.get('unit_cost') else 0.0,  # Ensure unitCost is a float
+            'totalCost': float(lineItem.get('total_cost').replace("INR", "").strip().replace(" ", "")) if lineItem.get('total_cost') else 0.0,  # Ensure totalCost is a float
             'activeFlag': 1,
             'createdBy': payload.get('user_login_id')
 }

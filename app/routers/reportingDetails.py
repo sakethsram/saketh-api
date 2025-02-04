@@ -12,9 +12,9 @@ from typing import List, Optional
 from app.dependencies import get_db
 #from app.security import decode_access_token
 from app.queries.reportingDetails import (
-    GET_PURCHASE_ORDER_AGG_DETAILS,
+    AGG_PURCHASE_ORDER_TOP_CUSTOMER,
     GET_PURCHASE_ORDER_TOP_CUSTOMERS_AGG_DETAILS,
-    GET_INVOICES_TOP_CUSTOMERS_AGG_DETAILS,
+    TOP_5_CUSTOMERS_BASED_ON_PO_COUNT,
     GET_INVOICES_AGG_DETAILS,
     GET_PO_COUNT_DETAILS,
     GET_PRICE_DETAILS_FOR_KPI
@@ -42,11 +42,13 @@ def get_warehouse_details(
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
     try:
-        poAggDetails = db.execute(text(GET_PURCHASE_ORDER_AGG_DETAILS)).mappings().all()
-        poTopCustomersAggDetails = db.execute(text(GET_PURCHASE_ORDER_TOP_CUSTOMERS_AGG_DETAILS)).mappings().all()
+        top5CustomersBasedOnPOCount = db.execute(text(TOP_5_CUSTOMERS_BASED_ON_PO_COUNT)).mappings().all()
+        top5CustomersBasedOnPOAmount = db.execute(text(GET_PURCHASE_ORDER_TOP_CUSTOMERS_AGG_DETAILS)).mappings().all()
+        top5CustomersAggregatedPOAndAmountQtrOnQtr = db.execute(text(AGG_PURCHASE_ORDER_TOP_CUSTOMER)).mappings().all()
         return {
-            "poAggDetails": convertKeysToCamelCase(poAggDetails), 
-            "poTopCustomersAggDetails": convertKeysToCamelCase(poTopCustomersAggDetails)
+            "top5CustomersBasedOnPOCount": convertKeysToCamelCase(top5CustomersBasedOnPOCount), 
+            "top5CustomersBasedOnPOAmount": convertKeysToCamelCase(top5CustomersBasedOnPOAmount),
+            "top5CustomersAggregatedPOAndAmountQtrOnQtr": convertKeysToCamelCase(top5CustomersAggregatedPOAndAmountQtrOnQtr)
         }
     except Exception as e:
         logger.error(f"Failed to getPurchaseOrderReportingDetails: {e}")
@@ -105,10 +107,41 @@ def get_warehouse_details(
         poCountDetails = db.execute(text(GET_PO_COUNT_DETAILS)).mappings().first()
         priceDetails = db.execute(text(GET_PRICE_DETAILS_FOR_KPI)).mappings().first()
         return {
-            "poCountDetails": poCountDetails,
-            "amountDetails": priceDetails
+            "poCountDetails": convertKeysToCamelCase(poCountDetails),
+            "amountDetails": convertKeysToCamelCase(priceDetails)
         }
     except Exception as e:
         logger.error(f"Failed to getPoCountsForReporting: {e}")
         raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
-        
+
+# the below API is in WIP
+# @router.get("/getPoTrendChartForReporting")
+# def get_warehouse_details(
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(security_scheme),
+#     authorization: str = Header(..., description="Bearer token for authentication", example="Bearer your_token_here")
+# ):
+#     """
+#     Fetch invoices reporting details details.
+#     """
+#     if not authorization.startswith("Bearer "):
+#         raise HTTPException(status_code=403, detail="Invalid Authorization header format")
+    
+#     token = authorization.split(" ")[1]
+#     payload = validate_token(token, db)
+
+#     try:
+#         logger.info(f"Request received for /getPoCountsForReporting from - {payload.get('user_login_id')}")
+#     except Exception as e:
+#         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+#     try:
+#         poCountDetails = db.execute(text(GET_PO_COUNT_DETAILS)).mappings().first()
+#         priceDetails = db.execute(text(GET_PRICE_DETAILS_FOR_KPI)).mappings().first()
+#         return {
+#             "poCountDetails": poCountDetails,
+#             "amountDetails": priceDetails
+#         }
+#     except Exception as e:
+#         logger.error(f"Failed to getPoCountsForReporting: {e}")
+#         raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
+
