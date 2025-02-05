@@ -20,13 +20,19 @@ CHECK_PURCHASE_ORDER_EXIST = """
 """
 
 UPDATE_PURCHASE_ORDER_DETAILS = """
-    UPDATE
-        evenflow_purchase_orders
-    SET 
-        po_processing_status = '{po_status}'
-    WHERE
-        po_number = '{po_number}' and
-        active_flag = 1
+    UPDATE 
+        evenflow_purchase_orders EPO
+    SET po_processing_status = CASE 
+                                WHEN EPO.submitted_qty = EPOLI.lineItemTotalQty THEN 'FULFILLED'
+                                ELSE 'PARTIALLY_FULFILLED'
+                             END
+    FROM (
+        SELECT evenflow_purchase_orders_id, COUNT(qty_requested) AS lineItemTotalQty
+        FROM evenflow_purchase_orders_line_items
+        GROUP BY evenflow_purchase_orders_id
+    ) EPOLI
+    WHERE EPO.id = EPOLI.evenflow_purchase_orders_id
+    AND po_number = '{po_number}';
 """
 
 INSERT_PURCHASE_ORDER_DETAILS = """
