@@ -6,6 +6,7 @@ from typing import List
 from app.dependencies import get_db
 from app.models import User
 from app.models import ClientMaster
+from app.models import DistyMaster
 from app.schemas import ClientMasterSchema
 from app.security import validate_token
 from app.schemas import AccountingDetailsSchema
@@ -20,6 +21,8 @@ from sqlalchemy.exc import SQLAlchemyError
 import re
 from app.schemas import AccountingToolDetails 
 from typing import List 
+from sqlalchemy.exc import SQLAlchemyError
+import logging
 
 router = APIRouter()
 security_scheme = HTTPBearer()
@@ -85,55 +88,63 @@ def onboard_distributors(db: Session, current_user: str, cdetails: object, distr
     try:
         # Validate input
         if not hasattr(cdetails, 'id'):
-            raise ValueError("cdetails must have an 'id' attribute")
+            raise ValueError("cdetails must have an 'id' attribute.")
         if not isinstance(distributors, (list, tuple)):
-            raise ValueError("distributors must be a list or tuple")
+            raise ValueError("distributors must be a list or tuple.")
 
         # Fetch distributor details from disty_master table
         disty_records = db.query(DistyMaster).filter(DistyMaster.id.in_(distributors)).all()
 
         if not disty_records:
-            raise ValueError("No distributors found with the provided IDs")
+            raise ValueError("No distributors found with the provided IDs.")
+
+        logging.debug(f"Fetched distributor records: {[d.id for d in disty_records]}")
 
         # Prepare distributor instances for insertion into EvenflowDistys
         distys_instances = []
         for disty in disty_records:
             # Check if the distributor already exists in EvenflowDistys to prevent duplicates
             existing_record = db.query(EvenflowDistys).filter_by(client_id=cdetails.id, disty_id=disty.id).first()
-            if not existing_record:
-                distys_instances.append(EvenflowDistys(
-                    client_id=cdetails.id,
-                    disty_id=disty.id,
-                    created_by=current_user,
-                    modified_by=current_user,
-                    active_flag=1
-                ))
+
+            if existing_record:
+                logging.debug(f"Distributor ID {disty.id} already exists for client {cdetails.id}, skipping.")
+                continue
+
+            new_disty = EvenflowDistys(
+                client_id=cdetails.id,
+                disty_id=disty.id,
+                created_by=current_user,
+                modified_by=current_user,
+                active_flag=1
+            )
+
+            distys_instances.append(new_disty)
 
         # Bulk insert distributors into EvenflowDistys table
         if distys_instances:
+            logging.debug(f"Inserting distributors: {[d.disty_id for d in distys_instances]}")
             db.bulk_save_objects(distys_instances)
+            db.flush()  # Ensure data is written before commit
             db.commit()  # Commit the transaction
 
-            # Logging inserted records
-            print("Client Distributors details:")
-            for instance in distys_instances:
-                pprint(vars(instance))
-            print()
+            logging.info(f"Inserted {len(distys_instances)} new distributors into EvenflowDistys.")
 
         else:
-            print("No new distributors to add.")
+            logging.info("No new distributors to add.")
 
     except SQLAlchemyError as e:
         db.rollback()
-        print(f"Database error occurred: {str(e)}")
+        logging.error(f"Database error occurred: {str(e)}")
+        raise
     except ValueError as e:
-        print(f"Validation error: {str(e)}")
+        logging.error(f"Validation error: {str(e)}")
+        raise
     except Exception as e:
         db.rollback()
-        print(f"Unexpected error: {str(e)}")
+        logging.error(f"Unexpected error: {str(e)}")
+        raise
     finally:
         db.close()
-
 
 
 def onboard_client_acccount(db, current_user, cdetails, accdetails):
