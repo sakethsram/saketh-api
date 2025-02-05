@@ -397,7 +397,7 @@ async def generate_po_details(
         toalRequestedItems = toalRequestedItems + int(lineItem.get('qty_requested'))
     try:
         # TODO remove the + str(int(time.time())) part once development is completed
-        values = {"po_number": poData.get('po_number') + str(int(time.time()))}
+        values = {"po_number": poData.get('po_number')}
         poDetailsQuery = CHECK_PURCHASE_ORDER_EXIST.format(**values)
         poDetails = db.execute(text(poDetailsQuery)).mappings().all()
         if poDetails:
@@ -428,7 +428,7 @@ async def generate_po_details(
             'clientId': clientId,
             'evenflowCustomerMasterId': customerId,
             'toalRequestedItems': toalRequestedItems,
-            'poNumber': poData.get('po_number') + str(int(time.time())),
+            'poNumber': poData.get('po_number'),
             'poStatus': poData.get('status'),
             'vendor': poData.get('vendor'),
             'shipToLocation': poData.get('ship_to_location'),
