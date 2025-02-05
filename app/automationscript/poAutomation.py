@@ -1,8 +1,9 @@
 import re
 import fitz
 import pandas as pd
-from app.utils.logger  import logger
+from loguru import logger
 from datetime import datetime
+from dateutil import parser
 
 class ExtractPOData:
     _patterns = {
@@ -79,7 +80,15 @@ class ExtractPOData:
         return extracted_blocks
     
     @staticmethod
-    def get_platform_key(key_mapper,field_name):
+    def convert_to_yyyy_mm_dd(date_string):
+        try:
+            parsed_date = parser.parse(date_string)
+            return parsed_date.strftime('%Y-%m-%d')
+        except ValueError:
+            return "Invalid date format"
+    
+    @staticmethod
+    def get_platform_key(key_mapper,field_name:str):
         """
         Maps a PDF field name to a target application field name using a key mapper DataFrame.
         
@@ -95,7 +104,12 @@ class ExtractPOData:
         str
             The target application field name.
         """
-        return key_mapper.loc[key_mapper["SourceField"].str.lower() == field_name.lower()]["TargetField"].values[0].split(".")[-1]
+        try:
+            platform_key = key_mapper.loc[key_mapper["SourceField"].str.lower() == field_name.lower()]["TargetField"].values[0].split(".")[-1]
+        except:
+            #print(f"Error getting platform_key for {field_name} . using field_name as is")
+            platform_key = field_name.lower().replace("\n","").replace(" ","_")
+        return platform_key
     
     def extract_po_data(po_file_path:str,key_mapper)->dict:
         
@@ -138,7 +152,7 @@ class ExtractPOData:
                     match = ExtractPOData._patterns["po_item_number"].search(row[0])
                     output_key_value['no_of_po_items'] = match.group(1)
         
-        logger.info(f"Number of tables :{len(tables)}")
+        #logger.info(f"Number of tables :{len(tables)}")
         
         po_line_items = []
 
@@ -147,8 +161,8 @@ class ExtractPOData:
             
             df: pd.DataFrame =  table
             
-            logger.info(f"Headers: {df.columns.to_list()}")
-            logger.info(f"No of Rows: {len(df)}")
+            #logger.info(f"Headers: {df.columns.to_list()}")
+            #logger.info(f"No of Rows: {len(df)}")
             
             #header-on-right
             if 'Status' in df.columns:
@@ -159,10 +173,12 @@ class ExtractPOData:
                 for i, row in  df.iterrows():
                     if row['key'] == 'Ship window':
                         ship_window_from = row['value'].split('-')[0].strip()
-                        ship_window_from = datetime.strptime(ship_window_from, "%d/%m/%Y").strftime("%Y-%m-%d")
+                        ship_window_from = ExtractPOData.convert_to_yyyy_mm_dd(ship_window_from)
+                        #ship_window_from = datetime.strptime(ship_window_from, "%d/%m/%Y").strftime("%Y-%m-%d")
 
                         ship_window_to = row['value'].split('-')[1].strip()
-                        ship_window_to = datetime.strptime(ship_window_to, "%d/%m/%Y").strftime("%Y-%m-%d")
+                        ship_window_to = ExtractPOData.convert_to_yyyy_mm_dd(ship_window_to)
+                        #ship_window_to = datetime.strptime(ship_window_to, "%d/%m/%Y").strftime("%Y-%m-%d")
                         
                         output_key_value['ship_window_from'] = ship_window_from
                         output_key_value['ship_window_to'] = ship_window_to
@@ -223,6 +239,6 @@ class ExtractPOData:
         #print(json.dumps(po_data,indent=4)) 
         return po_data
 
-# po_file_path = r"D:\3.Freelancing\Sudhakar\INVOICE_GENERATION_B2B_USECASE\po_data_extraction\Data\Input\PO.pdf"
+# po_file_path = r"D:\3.Freelancing\Sudhakar\INVOICE_GENERATION_B2B_USECASE\po_data_extraction\Data\Input\1MW85B4B.pdf"
 # mapping_file_path = r"C:\Users\saina\Downloads\drive-download-20250129T035146Z-001\evenflow-po-mappings.csv"
 # ExtractPOData.get_data_from_po(po_file_path=po_file_path,po_mapping_file_path=mapping_file_path)
