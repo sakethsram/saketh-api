@@ -23,8 +23,8 @@ UPDATE_PURCHASE_ORDER_DETAILS = """
     UPDATE 
         evenflow_purchase_orders EPO
     SET po_processing_status = CASE 
-                                WHEN EPO.submitted_qty = EPOLI.lineItemTotalQty THEN 'FULFILLED'
-                                ELSE 'PARTIALLY_FULFILLED'
+                                WHEN EPO.submitted_qty = EPOLI.lineItemTotalQty THEN 'IN_PROGRESS_FULL'
+                                ELSE 'IN_PROGRESS_PARTIAL'
                              END
     FROM (
         SELECT evenflow_purchase_orders_id, COUNT(qty_requested) AS lineItemTotalQty
