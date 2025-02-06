@@ -51,9 +51,6 @@ class CreateInvoiceInputRequest(BaseModel):
     boxNumber: str = Field(..., description="Box Numbetr", example="box number")
     notes: str = Field(..., description="Notes", example="any comment")
     supplierName: str = Field(..., description="Name of the supplier", example="Acme Corp.")
-    totalAmount: float = Field(..., ge=0, description="Total amount for the PO", example=1000.50)
-    startDate: date = Field(..., description="Start date of the PO in YYYY-MM-DD format")
-    endDate: Optional[date] = Field(None, description="End date of the PO in YYYY-MM-DD format")
 
     otherWarehouseName: Optional[str] = Field(None, description="Other Warehouse Name", example="xyz")
     otherWarehouseAddressLine1: Optional[str] = Field(None, description="Other Warehouse AddressLine1", example="xyz")

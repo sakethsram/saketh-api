@@ -145,12 +145,15 @@ FETCH_TOTAL_COUNT_PO_LISTING_QUERY = """
 
 PO_DETAILS_QUERY_BY_PO_NUMBER = """
     SELECT  
+        id as purchase_order_id,
         '{po_number}' as po_number,
+        evenflow_customer_master_id,
 	    po_status,
 	    vendor,
 	    ship_to_location,
 	    ordered_on,
 	    ship_window_from,
+        ship_window_to,
 	    freight_terms,
 	    payment_method,
 	    payment_terms,
@@ -167,7 +170,9 @@ PO_DETAILS_QUERY_BY_PO_NUMBER = """
 	    cancelled_items,
         cancelled_qty,
         cancelled_total_cost,
-	    delivery_address
+	    delivery_address,
+        delivery_address_to,
+        po_processing_status
     FROM
 	    evenflow_purchase_orders 
     WHERE 
@@ -176,7 +181,7 @@ PO_DETAILS_QUERY_BY_PO_NUMBER = """
 PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER_WITHOUT_FULFILLED = """
     SELECT
         '{po_number}' as po_number,
-        poli.id,
+        poli.id as po_line_item_id,
 	    asin,
 	    external_id,
 	    model_number,
@@ -189,7 +194,8 @@ PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER_WITHOUT_FULFILLED = """
 	    qty_received,
 	    qty_outstanding,
 	    unit_cost,
-	    total_cost
+	    total_cost,
+        po_line_item_processing_status
     FROM 
 	    evenflow_purchase_orders_line_items poli
     JOIN 
@@ -205,7 +211,7 @@ PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER_WITHOUT_FULFILLED = """
 PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER_WITH_FULFILLED = """
     SELECT
         '{po_number}' as po_number,
-        poli.id,
+        poli.id as po_line_item_id,
 	    asin,
 	    external_id,
 	    model_number,
@@ -218,7 +224,8 @@ PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER_WITH_FULFILLED = """
 	    qty_received,
 	    qty_outstanding,
 	    unit_cost,
-	    total_cost
+	    total_cost,
+        po_line_item_processing_status
     FROM 
 	    evenflow_purchase_orders_line_items poli
     JOIN 
