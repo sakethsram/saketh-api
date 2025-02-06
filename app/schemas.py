@@ -58,7 +58,7 @@ class UserTokenSchema(BaseModel):
 
 class UploadPoSchema(BaseModel):
     filename: str
-    file_hash: str
+    # file_hash: str
     saved_path: str
     status: str
     extracted_data: Optional[List[dict]] = None

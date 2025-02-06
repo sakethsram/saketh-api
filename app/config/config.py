@@ -10,16 +10,15 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES = 300
     
     # Base folder for storing files
-    base_folder = "e_commerce_platform"
-    purchase_orders_folder = "purchase_orders"
-    item_master_folder = "item_master"
-    customer_master_folder = "customer_master"
+    purchase_orders_folder = "purchase-orders"
+    item_master_folder = "item-master"
+    customer_master_folder = "customer-master"
     sample_po = "sample-po"
 
     # Folder structure sub-categories
-    po_mappings_folder = "po_mappings"
-    item_master_mappings_folder = "item_master_mappings"
-    customer_master_mappings_folder = "customer_master_mappings"
+    po_mappings_folder = "po-mappings"
+    item_master_mappings_folder = "item-master-mappings"
+    customer_master_mappings_folder = "customer-master-mappings"
 
 settings = Settings()
 
