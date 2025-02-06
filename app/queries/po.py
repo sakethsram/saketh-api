@@ -1,6 +1,8 @@
 FETCH_PO_LISTING_QUERY = """
         SELECT * FROM(		
 		    SELECT 
+                EPO.id as purchase_order_id,
+                EPO.evenflow_customer_master_id as customer_master_id,
                 EPO.po_processing_status AS type, 
                 EPO.po_number, 
                 ECM.customer_name,
@@ -42,6 +44,8 @@ FETCH_PO_LISTING_QUERY = """
             UNION
 
             SELECT 
+                EPO.id as purchase_order_id,
+                EPO.evenflow_customer_master_id as customer_master_id,
 	            EPO.po_processing_status as type, 
 	            EPO.po_number, 
 	            ECM.customer_name,
@@ -147,7 +151,7 @@ PO_DETAILS_QUERY_BY_PO_NUMBER = """
     SELECT  
         id as purchase_order_id,
         '{po_number}' as po_number,
-        evenflow_customer_master_id,
+        evenflow_customer_master_id as customer_master_id,
 	    po_status,
 	    vendor,
 	    ship_to_location,
