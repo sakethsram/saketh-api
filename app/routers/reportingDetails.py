@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 from app.utils.logger  import logger
 from app.helper.genericHelper import convertKeysToCamelCase
-from datetime import date
+from datetime import date, datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from typing import List, Optional
 from app.dependencies import get_db
 #from app.security import decode_access_token
@@ -17,8 +18,20 @@ from app.queries.reportingDetails import (
     TOP_5_CUSTOMERS_BASED_ON_PO_COUNT,
     GET_INVOICES_AGG_DETAILS,
     GET_PO_COUNT_DETAILS,
-    GET_PRICE_DETAILS_FOR_KPI
+    GET_PRICE_DETAILS_FOR_KPI,
+    PO_TREND_CHART_DAILY_QUERY,
+    PO_TREND_CHART_MONTHLY_QUERY,
+    PO_TREND_CHART_QUARTERLY_QUERY,
+    PO_TREND_CHART_YEARLY_QUERY
 )
+
+from enum import Enum
+
+class IntervalFilter(str, Enum):
+    daily = "daily"
+    monthly = "monthly"
+    yearly = "yearly"
+    quarterly = "quarterly"
 
 router = APIRouter()
 security_scheme = HTTPBearer()
@@ -114,34 +127,54 @@ def get_warehouse_details(
         logger.error(f"Failed to getPoCountsForReporting: {e}")
         raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
 
-# the below API is in WIP
-# @router.get("/getPoTrendChartForReporting")
-# def get_warehouse_details(
-#     db: Session = Depends(get_db),
-#     current_user: User = Depends(security_scheme),
-#     authorization: str = Header(..., description="Bearer token for authentication", example="Bearer your_token_here")
-# ):
-#     """
-#     Fetch invoices reporting details details.
-#     """
-#     if not authorization.startswith("Bearer "):
-#         raise HTTPException(status_code=403, detail="Invalid Authorization header format")
+@router.get("/getPoTrendChartForReporting")
+def get_warehouse_details(
+    db: Session = Depends(get_db),
+    intervalFilter: IntervalFilter = Query(..., description="Interval Filter", example = "daily"),
+    current_user: User = Depends(security_scheme),
+    authorization: str = Header(..., description="Bearer token for authentication", example="Bearer your_token_here")
+):
+    """
+    Fetch trend chart reporting details details.
+    """
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=403, detail="Invalid Authorization header format")
     
-#     token = authorization.split(" ")[1]
-#     payload = validate_token(token, db)
+    token = authorization.split(" ")[1]
+    payload = validate_token(token, db)
 
-#     try:
-#         logger.info(f"Request received for /getPoCountsForReporting from - {payload.get('user_login_id')}")
-#     except Exception as e:
-#         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
-#     try:
-#         poCountDetails = db.execute(text(GET_PO_COUNT_DETAILS)).mappings().first()
-#         priceDetails = db.execute(text(GET_PRICE_DETAILS_FOR_KPI)).mappings().first()
-#         return {
-#             "poCountDetails": poCountDetails,
-#             "amountDetails": priceDetails
-#         }
-#     except Exception as e:
-#         logger.error(f"Failed to getPoCountsForReporting: {e}")
-#         raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
+    try:
+        logger.info(f"Request received for /getPoTrendChartForReporting from - {payload.get('user_login_id')}")
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+    try:
+        endDate = datetime.today().date()
+        startDate = datetime.today().date()
+        poTrendChartQuery = ""
+        if(intervalFilter == 'daily'):
+            startDate = endDate - timedelta(days=30)
+            values = {"startDate": startDate, "endDate": endDate }
+            poTrendChartQuery = PO_TREND_CHART_DAILY_QUERY.format(**values)
+        elif(intervalFilter == 'monthly'):
+            startDate = endDate - relativedelta(months=24)
+            values = {"startDate": startDate, "endDate": endDate }
+            poTrendChartQuery = PO_TREND_CHART_MONTHLY_QUERY.format(**values)
+        elif(intervalFilter == 'quarterly'):
+            startDate = endDate - relativedelta(months=8*3)
+            values = {"startDate": startDate, "endDate": endDate }
+            poTrendChartQuery = PO_TREND_CHART_QUARTERLY_QUERY.format(**values)
+        elif(intervalFilter == 'yearly'):
+            startDate = endDate - relativedelta(years=5)
+            values = {"startDate": startDate, "endDate": endDate }
+            poTrendChartQuery = PO_TREND_CHART_YEARLY_QUERY.format(**values)
+        
+        aggregatedDataForTrendChart = db.execute(text(poTrendChartQuery)).mappings().all()
+        
+        return {
+            "intervalFilter": convertKeysToCamelCase(intervalFilter),
+            "data": convertKeysToCamelCase(aggregatedDataForTrendChart)
+        }
+    except Exception as e:
+        logger.error(f"Failed to getPoTrendChartForReporting: {e}")
+        raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
 

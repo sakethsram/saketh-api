@@ -100,7 +100,6 @@ def create_invoice_input(
             values = {"po_number": request.poNumber}
             GET_PURCHASE_ORDER_DETAILS_FORMATTED = GET_PURCHASE_ORDER_DETAILS.format(**values) 
             purchaseOrderDetails = db.execute(text(GET_PURCHASE_ORDER_DETAILS_FORMATTED)).mappings().first()
-            
             # Fetching accounting details for the given clientId
             logger.info(f"Fetching accounting details for clientId {request.clientId}")
             values = {"client_id": request.clientId}
@@ -188,7 +187,8 @@ def create_invoice_input(
                 'otherWarehouseCity': request.otherWarehouseCity,
                 'otherWarehouseState': request.otherWarehouseState,
                 'otherWarehouseCountry': request.otherWarehouseCountry,
-                'otherWarehousePostalCode': request.otherWarehousePostalCode
+                'otherWarehousePostalCode': request.otherWarehousePostalCode,
+                'poLineItemProcessingStatus': lineItemQtySatisfy
             }
             new_po_query = text(CREATE_INVOICE_INPUT)
             db.execute(new_po_query, invoiceInputDict)
@@ -200,6 +200,7 @@ def create_invoice_input(
         values = { 'po_number': purchaseOrderNumber, 'po_status': allOrderQtySatisfiedFlag }
         UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED = UPDATE_PURCHASE_ORDER_DETAILS.format(**values)
         db.execute(text(UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED))
+
         db.commit()
         return {"message": "Invoice line item created successfully"}
     except Exception as e:
