@@ -378,6 +378,7 @@ async def generate_po_details(
     os.remove(poFileLocation)
     os.remove(mappingFilePath)
     poNumber = poData.get('po_number')
+    s3Path = ""
     
     try:
         buffer = BytesIO(await file.read()) 
@@ -388,13 +389,22 @@ async def generate_po_details(
             Body=buffer,  
             ContentType=file.content_type, 
         )
+        s3Path = f"https://{AWS_BUCKET_NAME}.s3.{AWS_REGION}.amazonaws.com/{'evenflow/puchase-orders/'+currentDate.strftime('%Y-%m-%d')+'/evenflow-'+poNumber+'-'+str(currentDate)+'.pdf'}"
     except Exception as e:
         logger.error(f"Failed to uploadPo, Error uploading file to S3: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error uploading file to S3: {str(e)}")
 
     toalRequestedItems = 0
+    toalQtyAccepted = 0
+    totalQtyFullfilled = 0
+    totalQtyOutstanding = 0
     for lineItem in poData.get("po_line_items"):
         toalRequestedItems = toalRequestedItems + int(lineItem.get('qty_requested'))
+        toalQtyAccepted = toalQtyAccepted + int(lineItem.get('qty_accepted')) if lineItem.get('qty_accepted').isdigit() else 0
+        totalQtyFullfilled = totalQtyFullfilled + int(lineItem.get('qty_received')) if lineItem.get('qty_received').isdigit() else 0
+        totalQtyOutstanding = totalQtyOutstanding + int(lineItem.get('qty_outstanding')) if lineItem.get('qty_outstanding').isdigit() else 0
+        # will check ..totalQtyFullfilled = totalQtyFullfilled + 
+        
     try:
         # TODO remove the + str(int(time.time())) part once development is completed
         values = {"po_number": poData.get('po_number')}
@@ -429,7 +439,7 @@ async def generate_po_details(
             'evenflowCustomerMasterId': customerId,
             'toalRequestedItems': toalRequestedItems,
             'poNumber': poData.get('po_number'),
-            'poStatus': poData.get('status'),
+            'poStatus': poData.get('po_status'),
             'vendor': poData.get('vendor'),
             'shipToLocation': poData.get('ship_to_location'),
             'orderedOn': formattedOrderedOn.strftime("%Y-%m-%d"),
@@ -440,24 +450,29 @@ async def generate_po_details(
             'paymentTerms': poData.get('payment_terms'),
             'purchasingEntity': poData.get('purchasing_entity'),
             'submittedItems': poData.get('submitted_items'),
-            'submittedQty': poData.get('submitted_quantity_submitted'),
+            'submittedQty': int(poData.get('submitted_qty', '0').replace(",", "")),
             'submittedTotalCost': float(poData.get('submitted_total_cost').replace("INR", "").strip().replace(" ", "")),
             'acceptedItems': poData.get('accepted_items'),
-            'acceptedQty': poData.get('accepted_quantity_submitted'),
+            'acceptedQty': int(poData.get('accepted_qty', '0').replace(",", "")),
             'acceptedTotalCost': float(poData.get('accepted_total_cost').replace("INR", "").strip().replace(" ", "")),
             'cancelledItems': poData.get('cancelled_items'),
-            'cancelledQty': poData.get('cancelled_quantity_submitted'),
+            'cancelledQty': int(poData.get('cancelled_qty', '0').replace(",", "")),
             'cancelledTotalCost': float(poData.get('cancelled_total_cost').replace("INR", "").strip().replace(" ", "")),
             'receivedItems': poData.get('received_items'),
-            'receivedQty': poData.get('received_quantity_submitted'),
+            'receivedQty': int(poData.get('received_qty', '0').replace(",", "")),
             'receivedTotalCost': float(poData.get('received_total_cost').replace("INR", "").strip().replace(" ", "")),
-            'deliveryAddressTo': poData.get('delivery_address_code'),
-            'deliveryAddress': poData.get('delivery_address'),
+            'deliveryAddressTo': poData.get('delivery_address_to'),
+            'deliveryAddress': poData.get('delivery_address').replace("\n", ", "),
             'fiscalQuarter': orderedFiscalQuarter,
             'poMonth': orderedOnMonth,
             'poYear': orderedOnYear,
             'activeFlag': 1,
-            'createdBy': payload.get('user_login_id')
+            's3Path': s3Path,
+            'createdBy': payload.get('user_login_id'),
+            'toalQtyAccepted': toalQtyAccepted,
+            'totalQtyFullfilled': totalQtyFullfilled,
+            'totalQtyOutstanding': totalQtyOutstanding
+
         }
         generate_po_query = text(INSERT_PURCHASE_ORDER_DETAILS)
         db.execute(generate_po_query, poDetailsInputDict)
@@ -471,6 +486,7 @@ async def generate_po_details(
             'evenflowPurchaseOrdersId': poDetails.id,
             'externalId': lineItem.get('external_id'),
             'modelNumber': lineItem.get('model_number'),
+            'asin'       : lineItem.get('asin'),
             'hsn': lineItem.get('hsn') if lineItem.get('hsn') else None,  # Handle empty hsn
             'title': lineItem.get('title'),
             'windowType': lineItem.get('window_type'),
