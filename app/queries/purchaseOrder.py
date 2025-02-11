@@ -46,7 +46,8 @@ INSERT_PURCHASE_ORDER_DETAILS = """
             accepted_total_cost, cancelled_items, cancelled_qty, cancelled_total_cost,
             received_items, received_qty, received_total_cost, delivery_address_to,
             delivery_address, fiscal_quarter, po_month, po_year,
-            active_flag, created_by, po_processing_status
+            active_flag, created_by, po_processing_status, po_file_path, 
+            total_qty_accepted, total_qty_fulfilled, total_qty_outstanding
         )
         VALUES (
             :clientId, :evenflowCustomerMasterId, :toalRequestedItems,
@@ -57,7 +58,8 @@ INSERT_PURCHASE_ORDER_DETAILS = """
             :acceptedTotalCost, :cancelledItems, :cancelledQty, :cancelledTotalCost,
             :receivedItems, :receivedQty, :receivedTotalCost, :deliveryAddressTo,
             :deliveryAddress, :fiscalQuarter, :poMonth, :poYear,
-            :activeFlag, :createdBy, 'OPEN'
+            :activeFlag, :createdBy, 'OPEN', :s3Path, 
+            :toalQtyAccepted, :totalQtyFullfilled, :totalQtyOutstanding
         )
 """
 
