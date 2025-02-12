@@ -94,6 +94,9 @@ def create_invoice_input(
             values = {"sku": request.sku}
             GET_PRODUCT_DETAILS_FORMATED = GET_PRODUCT_DETAILS.format(**values)
             productInfo = db.execute(text(GET_PRODUCT_DETAILS_FORMATED)).mappings().first()
+            if not productInfo:
+                logger.error(f"Product details not found for the sku {request.sku}")
+                raise HTTPException(status_code=404, detail=f"Product details not found for the sku {request.sku}")
             values = {"po_number": request.poNumber}
             GET_PURCHASE_ORDER_DETAILS_FORMATTED = GET_PURCHASE_ORDER_DETAILS.format(**values) 
             purchaseOrderDetails = db.execute(text(GET_PURCHASE_ORDER_DETAILS_FORMATTED)).mappings().first()
@@ -110,13 +113,14 @@ def create_invoice_input(
                 logger.error(f"Accounting details not found for clientId {request.clientId}")
                 raise HTTPException(status_code=404, detail=f"Accounting details not found for clientId {request.clientId}")
             
-            values = {'order_id': purchaseOrderDetails.evenflow_purchase_orders_id, 'sku': request.sku}
+            values = {'purchase_order_line_item_id': request.poLineItemId}
             GET_PURCHASE_ORDER_LINE_ITEM_FORMATTED = GET_PURCHASE_ORDER_LINE_ITEM.format(**values) 
             purchaseOrderLineItemDetails = db.execute(text(GET_PURCHASE_ORDER_LINE_ITEM_FORMATTED)).mappings().first()
             
             # Check if purchaseOrderLineItemDetails is None
             if purchaseOrderLineItemDetails is None:
-                raise HTTPException(status_code=404, detail=f"Purchase order line item not found for PO {request.poNumber} and SKU {request.sku}")
+                logger.error(f"Purchase order line item not found with po line item id  {request.poLineItemId}")
+                raise HTTPException(status_code=404, detail=f"Purchase order line item not found with po line item id {request.poLineItemId}")
 
             orderedDate = purchaseOrderDetails.ordered_on
 

@@ -374,14 +374,14 @@ async def generate_po_details(
     
     # Need to supply the PO Mapping File path as well
     poData = ExtractPOData.get_data_from_po(poFileLocation, mappingFilePath)
-    
-    os.remove(poFileLocation)
-    os.remove(mappingFilePath)
+
     poNumber = poData.get('po_number')
     s3Path = ""
     
     try:
-        buffer = BytesIO(await file.read()) 
+        buffer = ''
+        with open(poFileLocation, "rb") as f: 
+            buffer = BytesIO(f.read())
         currentDate = datetime.now() 
         response = s3.put_object(
             Bucket=AWS_BUCKET_NAME,
@@ -390,6 +390,8 @@ async def generate_po_details(
             ContentType=file.content_type, 
         )
         s3Path = f"https://{AWS_BUCKET_NAME}.s3.{AWS_REGION}.amazonaws.com/{'evenflow/puchase-orders/'+currentDate.strftime('%Y-%m-%d')+'/evenflow-'+poNumber+'-'+str(currentDate)+'.pdf'}"
+        os.remove(poFileLocation)
+        os.remove(mappingFilePath)
     except Exception as e:
         logger.error(f"Failed to uploadPo, Error uploading file to S3: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error uploading file to S3: {str(e)}")
@@ -483,23 +485,23 @@ async def generate_po_details(
             if(lineItem.get('expected_date') != ''):
                 expectedDateFormatted = datetime.strptime(lineItem.get('expected_date'), "%m/%d/%Y").date().strftime("%Y-%m-%d")
             poLineItemDetailsInputDict = {
-            'evenflowPurchaseOrdersId': poDetails.id,
-            'externalId': lineItem.get('external_id'),
-            'modelNumber': lineItem.get('model_number'),
-            'asin'       : lineItem.get('asin'),
-            'hsn': lineItem.get('hsn') if lineItem.get('hsn') else None,  # Handle empty hsn
-            'title': lineItem.get('title'),
-            'windowType': lineItem.get('window_type'),
-            'expectedDate': expectedDateFormatted,
-            'qtyRequested': int(lineItem.get('qty_requested')) if lineItem.get('qty_requested').isdigit() else 0,  # Ensure qtyRequested is an integer
-            'qtyAccepted': int(lineItem.get('qty_accepted')) if lineItem.get('qty_accepted').isdigit() else 0,  # Ensure qtyAccepted is an integer
-            'qtyReceived': int(lineItem.get('qty_received')) if lineItem.get('qty_received').isdigit() else 0,  # Ensure qtyReceived is an integer
-            'qtyOutstanding': int(lineItem.get('qty_outstanding')) if lineItem.get('qty_outstanding').isdigit() else 0,  # Ensure qtyOutstanding is an integer
-            'unitCost': float(lineItem.get('unit_cost').replace("INR", "").strip().replace(" ", "")) if lineItem.get('unit_cost') else 0.0,  # Ensure unitCost is a float
-            'totalCost': float(lineItem.get('total_cost').replace("INR", "").strip().replace(" ", "")) if lineItem.get('total_cost') else 0.0,  # Ensure totalCost is a float
-            'activeFlag': 1,
-            'createdBy': payload.get('user_login_id')
-}
+                'evenflowPurchaseOrdersId': poDetails.id,
+                'externalId': lineItem.get('external_id'),
+                'modelNumber': lineItem.get('model_number'),
+                'asin'       : lineItem.get('asin'),
+                'hsn': lineItem.get('hsn') if lineItem.get('hsn') else None,  # Handle empty hsn
+                'title': lineItem.get('title'),
+                'windowType': lineItem.get('window_type'),
+                'expectedDate': expectedDateFormatted,
+                'qtyRequested': int(lineItem.get('qty_requested')) if lineItem.get('qty_requested').isdigit() else 0,  # Ensure qtyRequested is an integer
+                'qtyAccepted': int(lineItem.get('qty_accepted')) if lineItem.get('qty_accepted').isdigit() else 0,  # Ensure qtyAccepted is an integer
+                'qtyReceived': int(lineItem.get('qty_received')) if lineItem.get('qty_received').isdigit() else 0,  # Ensure qtyReceived is an integer
+                'qtyOutstanding': int(lineItem.get('qty_outstanding')) if lineItem.get('qty_outstanding').isdigit() else 0,  # Ensure qtyOutstanding is an integer
+                'unitCost': float(lineItem.get('unit_cost').replace("INR", "").strip().replace(" ", "")) if lineItem.get('unit_cost') else 0.0,  # Ensure unitCost is a float
+                'totalCost': float(lineItem.get('total_cost').replace("INR", "").strip().replace(" ", "")) if lineItem.get('total_cost') else 0.0,  # Ensure totalCost is a float
+                'activeFlag': 1,
+                'createdBy': payload.get('user_login_id')
+            }
             generate_po_line_item_query = text(INSERT_PURCHASE_ORDER_LINE_ITEM)
             db.execute(generate_po_line_item_query, poLineItemDetailsInputDict)
 

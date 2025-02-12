@@ -4,8 +4,7 @@ GET_PURCHASE_ORDER_LINE_ITEM = """
     FROM 
         evenflow_purchase_orders_line_items
     WHERE
-        evenflow_purchase_orders_id = '{order_id}' and 
-        model_number = '{sku}' and
+        id = '{purchase_order_line_item_id}' and
         active_flag = 1
 """
 
