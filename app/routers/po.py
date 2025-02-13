@@ -398,17 +398,15 @@ async def generate_po_details(
 
     toalRequestedItems = 0
     toalQtyAccepted = 0
-    totalQtyFullfilled = 0
+    totalQtyReceived = 0
     totalQtyOutstanding = 0
     for lineItem in poData.get("po_line_items"):
         toalRequestedItems = toalRequestedItems + int(lineItem.get('qty_requested'))
         toalQtyAccepted = toalQtyAccepted + int(lineItem.get('qty_accepted')) if lineItem.get('qty_accepted').isdigit() else 0
-        totalQtyFullfilled = totalQtyFullfilled + int(lineItem.get('qty_received')) if lineItem.get('qty_received').isdigit() else 0
+        totalQtyReceived = totalQtyReceived + int(lineItem.get('qty_received')) if lineItem.get('qty_received').isdigit() else 0
         totalQtyOutstanding = totalQtyOutstanding + int(lineItem.get('qty_outstanding')) if lineItem.get('qty_outstanding').isdigit() else 0
-        # will check ..totalQtyFullfilled = totalQtyFullfilled + 
         
     try:
-        # TODO remove the + str(int(time.time())) part once development is completed
         values = {"po_number": poData.get('po_number')}
         poDetailsQuery = CHECK_PURCHASE_ORDER_EXIST.format(**values)
         poDetails = db.execute(text(poDetailsQuery)).mappings().all()
@@ -435,7 +433,6 @@ async def generate_po_details(
         else:  # January to March
             orderedFiscalQuarter = "Q4"
 
-        # TODO remove the + str(int(time.time())) part once development is completed
         poDetailsInputDict = {
             'clientId': clientId,
             'evenflowCustomerMasterId': customerId,
@@ -472,9 +469,9 @@ async def generate_po_details(
             's3Path': s3Path,
             'createdBy': payload.get('user_login_id'),
             'toalQtyAccepted': toalQtyAccepted,
-            'totalQtyFullfilled': totalQtyFullfilled,
-            'totalQtyOutstanding': totalQtyOutstanding
-
+            'totalQtyReceived': totalQtyReceived,
+            'totalQtyOutstanding': totalQtyOutstanding,
+            'modifiedBy': payload.get('user_login_id')
         }
         generate_po_query = text(INSERT_PURCHASE_ORDER_DETAILS)
         db.execute(generate_po_query, poDetailsInputDict)
@@ -500,7 +497,8 @@ async def generate_po_details(
                 'unitCost': float(lineItem.get('unit_cost').replace("INR", "").strip().replace(" ", "")) if lineItem.get('unit_cost') else 0.0,  # Ensure unitCost is a float
                 'totalCost': float(lineItem.get('total_cost').replace("INR", "").strip().replace(" ", "")) if lineItem.get('total_cost') else 0.0,  # Ensure totalCost is a float
                 'activeFlag': 1,
-                'createdBy': payload.get('user_login_id')
+                'createdBy': payload.get('user_login_id'),
+                'modifiedBy': payload.get('user_login_id')
             }
             generate_po_line_item_query = text(INSERT_PURCHASE_ORDER_LINE_ITEM)
             db.execute(generate_po_line_item_query, poLineItemDetailsInputDict)

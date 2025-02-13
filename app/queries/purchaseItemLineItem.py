@@ -12,11 +12,14 @@ UPDATE_PURCHASE_ORDER_LINE_ITEM = """
     UPDATE 
         evenflow_purchase_orders_line_items
     SET
-        po_line_item_processing_status = '{po_status}'
+        qty_fulfilled = qty_fulfilled + {acceptedQty},
+        po_line_item_processing_status = CASE 
+            WHEN qty_accepted = qty_fulfilled + {acceptedQty} THEN 'FULFILLED'
+            ELSE 'PARTIALLY_FULFILLED'
+        END
     WHERE
-        evenflow_purchase_orders_id = '{purchase_orders_id}' and
-        model_number = '{sku}' and
-        active_flag = 1
+        id = {poLineItemId}
+        AND active_flag = 1;
 """
 
 INSERT_PURCHASE_ORDER_LINE_ITEM = """
@@ -26,14 +29,14 @@ INSERT_PURCHASE_ORDER_LINE_ITEM = """
             title, window_type, expected_date, qty_requested,
             qty_accepted, qty_received, qty_outstanding, unit_cost,
             total_cost, active_flag, created_by, po_line_item_processing_status,
-            asin
+            asin, qty_fulfilled, modified_by
         )
         VALUES (
             :evenflowPurchaseOrdersId, :externalId, :modelNumber, :hsn,
             :title, :windowType, :expectedDate, :qtyRequested,
             :qtyAccepted, :qtyReceived, :qtyOutstanding, :unitCost,
             :totalCost, :activeFlag, :createdBy, 'OPEN', 
-            :asin
+            :asin, 0, :modifiedBy
         )
     
 """

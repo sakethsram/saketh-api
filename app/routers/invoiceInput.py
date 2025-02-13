@@ -28,7 +28,8 @@ from app.queries.purchaseItemLineItem import (
     UPDATE_PURCHASE_ORDER_LINE_ITEM
 )
 from app.queries.invoieInput import (
-    CREATE_INVOICE_INPUT
+    CREATE_INVOICE_INPUT,
+    GET_MAX_ITERATION_NUMBER
 )
 
 router = APIRouter()
@@ -82,12 +83,20 @@ def create_invoice_input(
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
 
-    allOrderQtySatisfiedFlag = "FULFILLED"
+    iterationIdFlag = True
     purchaseOrderNumber = ""
-    # Process each request in the input list
+    iterationNumber = 1
     try:
         for request in requests:
             purchaseOrderNumber = request.poNumber
+            if iterationIdFlag:
+                values = { "poNumber": purchaseOrderNumber }
+                GET_MAX_ITERATION_NUMBER_FORMATED = GET_MAX_ITERATION_NUMBER.format(**values)
+                maxIterationNumber = db.execute(text(GET_MAX_ITERATION_NUMBER_FORMATED)).mappings().first()
+                if(maxIterationNumber and maxIterationNumber.iteration_id):
+                    iterationNumber = maxIterationNumber.iteration_id + 1
+                iterationIdFlag = False
+
             values = {"customer_id": request.customerMasterId}
             GET_CUSTOMER_DETAILS_FORMATED = GET_CUSTOMER_DETAILS.format(**values)
             customerInfo = db.execute(text(GET_CUSTOMER_DETAILS_FORMATED)).mappings().first()
@@ -124,10 +133,6 @@ def create_invoice_input(
 
             orderedDate = purchaseOrderDetails.ordered_on
 
-            lineItemQtySatisfy = 'FULFILLED'
-            if request.acceptedQty != purchaseOrderLineItemDetails.quantity:
-                lineItemQtySatisfy = "PARTIALLY_FULFILLED"
-                allOrderQtySatisfiedFlag = "PARTIALLY_FULFILLED"
             orderedFiscalQuarter = ''
             if 4 <= orderedDate.month <= 6:
                 orderedFiscalQuarter = "Q1"
@@ -189,18 +194,19 @@ def create_invoice_input(
                 'otherWarehouseState': request.otherWarehouseState,
                 'otherWarehouseCountry': request.otherWarehouseCountry,
                 'otherWarehousePostalCode': request.otherWarehousePostalCode,
-                'poLineItemProcessingStatus': lineItemQtySatisfy
+                'modifiedBy': payload.get('user_login_id'),
+                'iterationNumber': iterationNumber
             }
             new_po_query = text(CREATE_INVOICE_INPUT)
             db.execute(new_po_query, invoiceInputDict)
 
-            values = {'purchase_orders_id': purchaseOrderDetails.evenflow_purchase_orders_id, 'sku': request.sku, 'po_status': lineItemQtySatisfy}
+            values = {'acceptedQty': request.acceptedQty, 'poLineItemId': request.poLineItemId}
             UPDATE_PURCHASE_ORDER_LINE_ITEM_FORMATTED = UPDATE_PURCHASE_ORDER_LINE_ITEM.format(**values)
             db.execute(text(UPDATE_PURCHASE_ORDER_LINE_ITEM_FORMATTED))
 
-        values = { 'po_number': purchaseOrderNumber, 'po_status': allOrderQtySatisfiedFlag }
-        UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED = UPDATE_PURCHASE_ORDER_DETAILS.format(**values)
-        db.execute(text(UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED))
+            values = { 'po_number': purchaseOrderNumber, 'acceptedQty': request.acceptedQty }
+            UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED = UPDATE_PURCHASE_ORDER_DETAILS.format(**values)
+            db.execute(text(UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED))
 
         db.commit()
         return {"message": "Invoice line item created successfully"}

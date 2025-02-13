@@ -13,7 +13,7 @@ CREATE_INVOICE_INPUT = """
             invoice_generated_acc_tool, po_file_path,  box_number, total_box_count, 
             active_flag, created_by, other_warehouse_name, other_warehouse_address_line_1,
             other_warehouse_address_line_2, other_warehouse_city, other_warehouse_state, other_warehouse_country,
-            other_warehouse_postal_code, po_line_item_processing_status
+            other_warehouse_postal_code, modified_by, iteration_id
 
 	    )
 	    VALUES (
@@ -29,6 +29,17 @@ CREATE_INVOICE_INPUT = """
             :invoiceGeneratedAccTool, :poFilePath, :boxNumber, :totalBoxCount, 
             :activeFlag, :createdBy, :otherWarehouseName, :otherWarehouseAddressLine1,
             :otherWarehouseAddressLine2, :otherWarehouseCity, :otherWarehouseState, :otherWarehouseCountry,
-            :otherWarehousePostalCode, :poLineItemProcessingStatus
+            :otherWarehousePostalCode, :modifiedBy, :iterationNumber
 	)
+"""
+
+
+GET_MAX_ITERATION_NUMBER = """
+    SELECT 
+        max(iteration_id) as iteration_id
+    FROM
+        evenflow_invoice_inputs
+    WHERE
+        purchase_order_number = '{poNumber}' AND
+        active_flag = 1
 """

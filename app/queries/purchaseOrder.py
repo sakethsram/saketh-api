@@ -20,19 +20,16 @@ CHECK_PURCHASE_ORDER_EXIST = """
 """
 
 UPDATE_PURCHASE_ORDER_DETAILS = """
-    UPDATE 
-        evenflow_purchase_orders EPO
-    SET po_processing_status = CASE 
-                                WHEN EPO.submitted_qty = EPOLI.lineItemTotalQty THEN 'IN_PROGRESS_FULL'
-                                ELSE 'IN_PROGRESS_PARTIAL'
-                             END
-    FROM (
-        SELECT evenflow_purchase_orders_id, COUNT(qty_requested) AS lineItemTotalQty
-        FROM evenflow_purchase_orders_line_items where active_flag = 1
-        GROUP BY evenflow_purchase_orders_id
-    ) EPOLI
-    WHERE EPO.id = EPOLI.evenflow_purchase_orders_id
-    AND po_number = '{po_number}' AND EPO.active_flag = 1;
+    UPDATE evenflow_purchase_orders
+    SET
+        total_qty_fulfilled = total_qty_fulfilled + {acceptedQty},
+        po_processing_status = CASE 
+            WHEN total_qty_accepted = total_qty_fulfilled + {acceptedQty} THEN 'IN_PROGRESS_FULL'
+            ELSE 'IN_PROGRESS_PARTIAL'
+        END
+    WHERE
+        po_number = '{po_number}'
+        AND active_flag = 1;
 """
 
 INSERT_PURCHASE_ORDER_DETAILS = """
@@ -47,7 +44,8 @@ INSERT_PURCHASE_ORDER_DETAILS = """
             received_items, received_qty, received_total_cost, delivery_address_to,
             delivery_address, fiscal_quarter, po_month, po_year,
             active_flag, created_by, po_processing_status, po_file_path, 
-            total_qty_accepted, total_qty_fulfilled, total_qty_outstanding
+            total_qty_accepted, total_qty_received, total_qty_outstanding, total_qty_fulfilled,
+            modified_by
         )
         VALUES (
             :clientId, :evenflowCustomerMasterId, :toalRequestedItems,
@@ -59,7 +57,8 @@ INSERT_PURCHASE_ORDER_DETAILS = """
             :receivedItems, :receivedQty, :receivedTotalCost, :deliveryAddressTo,
             :deliveryAddress, :fiscalQuarter, :poMonth, :poYear,
             :activeFlag, :createdBy, 'OPEN', :s3Path, 
-            :toalQtyAccepted, :totalQtyFullfilled, :totalQtyOutstanding
+            :toalQtyAccepted, :totalQtyReceived, :totalQtyOutstanding, 0,
+            :modifiedBy
         )
 """
 
