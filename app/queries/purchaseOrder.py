@@ -28,11 +28,11 @@ UPDATE_PURCHASE_ORDER_DETAILS = """
                              END
     FROM (
         SELECT evenflow_purchase_orders_id, COUNT(qty_requested) AS lineItemTotalQty
-        FROM evenflow_purchase_orders_line_items
+        FROM evenflow_purchase_orders_line_items where active_flag = 1
         GROUP BY evenflow_purchase_orders_id
     ) EPOLI
     WHERE EPO.id = EPOLI.evenflow_purchase_orders_id
-    AND po_number = '{po_number}';
+    AND po_number = '{po_number}' AND EPO.active_flag = 1;
 """
 
 INSERT_PURCHASE_ORDER_DETAILS = """
