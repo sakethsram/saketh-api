@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import po, invoiceInput, warehouse, reportingDetails
+from app.routers import invoice_generation_flow, po, invoiceInput, warehouse, reportingDetails
 from app.routers import auth, users
 from app.routers import get_distys
 from app.routers import common
@@ -64,5 +64,13 @@ app.include_router(po.router)
 app.include_router(invoiceInput.router)
 app.include_router(warehouse.router)
 app.include_router(reportingDetails.router)
-
+app.include_router(invoice_generation_flow.router)
 logging.debug("Debugging initialized")
+
+
+
+import uvicorn
+
+
+if __name__=="__main__":
+    uvicorn.run("app.main:app",port=8000,reload=True,debug=True)

@@ -10,3 +10,5 @@ requests
 PyJWT
 python-multipart
 pdbwhereami
+pandas
+xlsxwriter
