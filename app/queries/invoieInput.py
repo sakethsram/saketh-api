@@ -43,3 +43,25 @@ GET_MAX_ITERATION_NUMBER = """
         purchase_order_number = '{poNumber}' AND
         active_flag = 1
 """
+
+UPDATE_PROCESSING_STATUS = """
+    WITH LatestInvoiceInput AS (
+        SELECT
+            ei.evenflow_purchase_orders_line_items_id,
+            ei.id AS invoice_input_id,
+            ROW_NUMBER() OVER (PARTITION BY ei.evenflow_purchase_orders_line_items_id 
+	    	ORDER BY ei.id DESC) AS rn
+        FROM evenflow_invoice_inputs ei
+        WHERE ei.evenflow_purchase_orders_line_items_id = {poLineItemId}
+    )
+    UPDATE evenflow_invoice_inputs ei
+    SET po_line_item_processing_status = CASE
+        WHEN poi.po_line_item_processing_status = 'FULFILLED' THEN 'FULFILLED'
+        ELSE 'PARTIALLY_FULFILLED'
+    END
+    FROM LatestInvoiceInput li
+    JOIN evenflow_purchase_orders_line_items poi
+        ON poi.id = li.evenflow_purchase_orders_line_items_id
+    WHERE ei.id = li.invoice_input_id
+      AND li.rn = 1; 
+"""

@@ -29,7 +29,8 @@ from app.queries.purchaseItemLineItem import (
 )
 from app.queries.invoieInput import (
     CREATE_INVOICE_INPUT,
-    GET_MAX_ITERATION_NUMBER
+    GET_MAX_ITERATION_NUMBER,
+    UPDATE_PROCESSING_STATUS
 )
 
 router = APIRouter()
@@ -203,6 +204,10 @@ def create_invoice_input(
             values = {'acceptedQty': request.acceptedQty, 'poLineItemId': request.poLineItemId}
             UPDATE_PURCHASE_ORDER_LINE_ITEM_FORMATTED = UPDATE_PURCHASE_ORDER_LINE_ITEM.format(**values)
             db.execute(text(UPDATE_PURCHASE_ORDER_LINE_ITEM_FORMATTED))
+
+            values = {'poLineItemId': request.poLineItemId}
+            UPDATE_PROCESSING_STATUS_FORMATTED = UPDATE_PROCESSING_STATUS.format(**values)
+            db.execute(text(UPDATE_PROCESSING_STATUS_FORMATTED))
 
             values = { 'po_number': purchaseOrderNumber, 'acceptedQty': request.acceptedQty }
             UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED = UPDATE_PURCHASE_ORDER_DETAILS.format(**values)
