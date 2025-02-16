@@ -113,6 +113,9 @@ class ClientOnboardRequest(BaseModel):
     customermaster_mapping: List[MappingItem]
 
 
+
+
+#------------------------------Invoice generation Flow Schemas------------------------------------
 class GenerateInvoiceRequest(BaseModel):
     invoiceNumber: str
 
@@ -159,16 +162,42 @@ class InvoiceInputsUpdateResponse(BaseModel):
 class GenerateInvoiceRequest(BaseModel):
     invoiceNumber: str
 
-class InvoiceInputRecord(BaseModel):
-    invoiceInputsId: int
-    invoiceNumber: Optional[str]
-    customerName: str
-    invoiceAmount: Optional[float]
-    paymentDueDate: Optional[str]
-    paymentTerms: str
-    poFilePath: str
-    invoiceInputs: str
+
 
 class PORecord(BaseModel):
     purchaseOrderId: int
     poNumber: str
+
+
+
+
+
+from pydantic import BaseModel
+from typing import List, Optional, Union
+from datetime import date
+
+class CustomField(BaseModel):
+    customfield_id: str
+    value: Union[str, int]
+
+class InvoiceLineItem(BaseModel):
+    item_id: int
+    hsn_or_sac: int
+    item_order: int
+    quantity: int
+    unit: str
+    rate: float
+
+class Invoice(BaseModel):
+    customer_id: int
+    invoice_number: str
+    place_of_supply: str
+    gst_treatment: str
+    gst_no: str
+    date: date
+    payment_terms: int
+    payment_terms_label: str
+    is_inclusive_tax: bool
+    custom_fields: List[CustomField]
+    line_items: List[InvoiceLineItem]
+    notes: Optional[str]

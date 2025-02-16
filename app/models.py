@@ -560,9 +560,9 @@ class EvenflowInvoices(Base):
     ageing_days = Column(Integer)
     evenflow_warehouses_id = Column(Integer, ForeignKey('evenflow_warehouses.id'))
     invoice_generated_acc_tool = Column(SmallInteger, nullable=False, default=0)
-    po_file_path = Column(String(125))
-    invoice_inputs_file_path = Column(String(125))
-    invoice_file_path = Column(String(125))
+    po_file_path = Column(String(255))
+    invoice_inputs_file_path = Column(String(255))
+    invoice_file_path = Column(String(255))
     total_box_count = Column(Integer)
     created_on = Column(TIMESTAMP, nullable=False, default=func.now())
     created_by = Column(String(125))
@@ -632,4 +632,9 @@ class EvenflowInvoicesLineItems(Base):
     invoice_input = relationship('EvenflowInvoiceInputs', backref='line_items')
     product = relationship('EvenflowProductMaster', backref='line_items')
     warehouse = relationship('EvenflowWarehouses', backref='line_items')
+
+
+
+
+
 

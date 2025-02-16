@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import invoice_generation_flow, po, invoiceInput, warehouse, reportingDetails
+from app.routers import invoice_generation_routers, po, invoiceInput, warehouse, reportingDetails
 from app.routers import auth, users
 from app.routers import get_distys
 from app.routers import common
@@ -64,7 +64,7 @@ app.include_router(po.router)
 app.include_router(invoiceInput.router)
 app.include_router(warehouse.router)
 app.include_router(reportingDetails.router)
-app.include_router(invoice_generation_flow.router)
+app.include_router(invoice_generation_routers.router,tags=['Invoice Generation API'])
 logging.debug("Debugging initialized")
 
 

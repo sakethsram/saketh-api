@@ -21,3 +21,4 @@ class InvoiceStatusEnum(str, Enum):
     OVER_DUE = "OVER_DUE"
     SETTLED = "SETTLED"
     TO_BE_GENERATED = "TO_BE_GENERATED"
+    NOT_RAISED = "NOT_RAISED"
