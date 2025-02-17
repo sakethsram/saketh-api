@@ -22,9 +22,9 @@ CHECK_PURCHASE_ORDER_EXIST = """
 UPDATE_PURCHASE_ORDER_DETAILS = """
     UPDATE evenflow_purchase_orders
     SET
-        total_qty_fulfilled = total_qty_fulfilled + {acceptedQty},
+        total_qty_fulfilled = total_qty_fulfilled + {fulfilledQty},
         po_processing_status = CASE 
-            WHEN total_qty_accepted = total_qty_fulfilled + {acceptedQty} THEN 'IN_PROGRESS_FULL'
+            WHEN total_qty_accepted = total_qty_fulfilled + {fulfilledQty} THEN 'IN_PROGRESS_FULL'
             ELSE 'IN_PROGRESS_PARTIAL'
         END
     WHERE
