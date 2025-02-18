@@ -61,10 +61,7 @@ def get_invoice_inputs_with_po_number(
         EvenflowInvoiceInputs.invoice_date
     ).filter(EvenflowInvoiceInputs.purchase_order_number == po_number,
              EvenflowInvoiceInputs.invoice_status==InvoiceStatusEnum.NOT_RAISED.value,
-             EvenflowPurchaseOrderLineItem.po_line_item_processing_status in (
-                 POLineItemProcessingStatusEnum.OPEN.value,
-                 POLineItemProcessingStatusEnum.PARTIALLY_FULFILLED.value)).join(EvenflowPurchaseOrderLineItem, 
-           EvenflowInvoiceInputs.evenflow_purchase_orders_line_items_id == EvenflowPurchaseOrderLineItem.id)
+             EvenflowInvoiceInputs.active_flag==1)
     total_records = query.count()
     results = query.offset((page_number - 1) * page_size).limit(page_size).all()
 
@@ -128,12 +125,11 @@ def create_invoice_line_items(db: Session, line_items_data: list, invoice_id: in
 
 def update_po_processing_status(db: Session, po_number: str):
     """Updates the PO processing status based on fulfillment status of its line items."""
-
     purchase_order_obj=db.query(EvenflowPurchaseOrder).filter(EvenflowPurchaseOrder.po_number==po_number).first()
     po_line_items = db.query(EvenflowPurchaseOrderLineItem).filter(EvenflowPurchaseOrderLineItem.evenflow_purchase_orders_id==purchase_order_obj.id).all()
 
     for line_item in po_line_items:
-        sq1 = line_item.qty_requested
+        sq1 = line_item.qty_accepted
         fq1 = db.query(func.sum(EvenflowInvoiceInputs.accepted_qty)).filter(EvenflowInvoiceInputs.evenflow_purchase_orders_line_items_id==line_item.id).scalar() or 0
 
         if sq1 == 0:

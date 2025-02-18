@@ -70,7 +70,7 @@ def upload_pdf_to_s3(file: bytes, po_number: str, invoice_number: str) -> Option
     s3 = session.client("s3")
 
     current_date = datetime.now().strftime("%Y-%m-%d")
-    s3_key = f"evenflow/purchase-orders/{current_date}/{po_number}/{file_name}"
+    s3_key = f"evenflow/GeneratedInvoices/{current_date}/GeneratedInvoice_{file_name}.pdf"
 
     try:
         s3.put_object(
