@@ -1,6 +1,6 @@
 GET_PURCHASE_ORDER_LINE_ITEM = """
     SELECT 
-        qty_requested as quantity, expected_date
+        qty_requested as quantity, expected_date, qty_accepted as acceptedQty
     FROM 
         evenflow_purchase_orders_line_items
     WHERE
@@ -12,9 +12,9 @@ UPDATE_PURCHASE_ORDER_LINE_ITEM = """
     UPDATE 
         evenflow_purchase_orders_line_items
     SET
-        qty_fulfilled = qty_fulfilled + {acceptedQty},
+        qty_fulfilled = qty_fulfilled + {fulfilledQty},
         po_line_item_processing_status = CASE 
-            WHEN qty_accepted = qty_fulfilled + {acceptedQty} THEN 'FULFILLED'
+            WHEN qty_accepted = qty_fulfilled + {fulfilledQty} THEN 'FULFILLED'
             ELSE 'PARTIALLY_FULFILLED'
         END
     WHERE

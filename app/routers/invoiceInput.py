@@ -47,7 +47,7 @@ class CreateInvoiceInputRequest(BaseModel):
     sku: str = Field(..., description="SKU", example="SKU number")
     appointmentId: int = Field(..., description="appoinment id", example=101)
     appointmentDate: date = Field(..., description="appintment date", example="2025=01-01")
-    acceptedQty: int = Field(..., description="Accepted quantity", example=10)
+    fulfilledQty: int = Field(..., description="Fulfilled quantity", example=10)
     placeOfSupply: Optional[str] = Field(None, description="Place of suply", example="Bangalore")
     totalBoxCount: int = Field(..., description="Total Box count", example=10)
     boxNumber: str = Field(..., description="Box Numbetr", example="box number")
@@ -167,7 +167,7 @@ def create_invoice_input(
                 'itemDesc': productInfo.description,
                 'itemType': productInfo.product_type,
                 'hsnSac': productInfo.hsn_sac,
-                'quantity': purchaseOrderLineItemDetails.quantity,
+                'quantity': request.fulfilledQty,
                 'usageUnit': productInfo.usage_unit,
                 'itemPrice': productInfo.rate,
                 'itemTaxExemptionReason': productInfo.exemption_reason,
@@ -181,7 +181,7 @@ def create_invoice_input(
                 'poYear': orderedDate.year,
                 'appointmentId': request.appointmentId,
                 'appointmentDate': request.appointmentDate,
-                'acceptedQty': request.acceptedQty,
+                'acceptedQty': purchaseOrderLineItemDetails.quantity,
                 'invoiceGeneratedAccTool': accountingDetails.accounting_tool_id,
                 'poFilePath': purchaseOrderDetails.po_file_path,
                 'boxNumber': request.boxNumber,
@@ -201,18 +201,17 @@ def create_invoice_input(
             new_po_query = text(CREATE_INVOICE_INPUT)
             db.execute(new_po_query, invoiceInputDict)
 
-            values = {'acceptedQty': request.acceptedQty, 'poLineItemId': request.poLineItemId}
+            values = {'fulfilledQty': request.fulfilledQty, 'poLineItemId': request.poLineItemId}
             UPDATE_PURCHASE_ORDER_LINE_ITEM_FORMATTED = UPDATE_PURCHASE_ORDER_LINE_ITEM.format(**values)
             db.execute(text(UPDATE_PURCHASE_ORDER_LINE_ITEM_FORMATTED))
-
+        
             values = {'poLineItemId': request.poLineItemId}
             UPDATE_PROCESSING_STATUS_FORMATTED = UPDATE_PROCESSING_STATUS.format(**values)
             db.execute(text(UPDATE_PROCESSING_STATUS_FORMATTED))
-
-            values = { 'po_number': purchaseOrderNumber, 'acceptedQty': request.acceptedQty }
+           
+            values = { 'po_number': purchaseOrderNumber, 'fulfilledQty': request.fulfilledQty }
             UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED = UPDATE_PURCHASE_ORDER_DETAILS.format(**values)
             db.execute(text(UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED))
-
         db.commit()
         return {"message": "Invoice line item created successfully"}
     except Exception as e:
