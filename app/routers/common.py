@@ -1,29 +1,27 @@
-import os
-import boto3
-from fastapi import APIRouter, File, UploadFile, HTTPException, Query, Header, Depends
+from fastapi import APIRouter, File, UploadFile
+from fastapi import HTTPException, Query, Header, Depends
 from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
+import os
+from datetime import datetime
 from app.models import User
-from dotenv import load_dotenv
 from app.schemas import UploadPoSchema
 from app.security import validate_token
 from app.dependencies import get_db
 from app.routers.utilities import convert_csv_to_json
+from app.routers.utilities import ensure_directory_exists
+from app.routers.utilities import calculate_sha256
+from app.routers.utilities import get_file_path
+from app.routers.utilities import save_file
 from app.config.config import settings
+from app.routers.utilities import convert_json_to_csv
 
 # Initialize FastAPI router
-load_dotenv()
-AWS_ACCESS_KEY = os.getenv('AWS_ACCESS_KEY')
-AWS_SECRET_KEY = os.getenv('AWS_SECRET_KEY')
-AWS_BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
-AWS_REGION = os.getenv('AWS_REGION')
-
-s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY,
-                         aws_secret_access_key=AWS_SECRET_KEY, region_name=AWS_REGION)
-
 router = APIRouter()
 security_scheme = HTTPBearer()
 
+# Base folder settings from config
+base_folder = settings.base_folder
 po_folder = settings.purchase_orders_folder
 po_mapping = settings.po_mappings_folder
 sample_po_folder = settings.sample_po
@@ -32,119 +30,173 @@ im_mapping = settings.item_master_mappings_folder
 cm_folder = settings.customer_master_folder
 cm_mapping = settings.customer_master_mappings_folder
 
-def ensure_s3_folders(client_name: str, page_id: str):
-    if page_id == "po_page":
-        s3_client.put_object(Bucket=AWS_BUCKET_NAME, Key=f"{client_name}/{po_folder}/{sample_po_folder}/")
-        s3_client.put_object(Bucket=AWS_BUCKET_NAME, Key=f"{client_name}/{po_folder}/{po_mapping}/")
-    elif page_id == "item_master_page":
-        s3_client.put_object(Bucket=AWS_BUCKET_NAME, Key=f"{client_name}/{im_folder}/")
-        s3_client.put_object(Bucket=AWS_BUCKET_NAME, Key=f"{client_name}/{im_folder}/{im_mapping}/")
-    elif page_id == "customer_master_page":
-        s3_client.put_object(Bucket=AWS_BUCKET_NAME, Key=f"{client_name}/{cm_folder}/")
-        s3_client.put_object(Bucket=AWS_BUCKET_NAME, Key=f"{client_name}/{cm_folder}/{cm_mapping}/")
-    else:
-        raise HTTPException(status_code=400, detail="Invalid page_id for folder structure.")
-
+# Function to handle Purchase Order (PO) file uploads
 def handle_po_file(db: Session, file: UploadFile, client_name: str, hash: str, page_id: str):
+    # Determine the file extension
     file_extension = os.path.splitext(file.filename)[1]
+    # Construct file names
     po_file_name = f"{client_name}-{sample_po_folder}{file_extension}"
     po_mappings_file_name = f"{client_name}-{po_mapping}.csv"
 
-    ensure_s3_folders(client_name, page_id)
+    # Construct file paths for PO and PO mappings
+    # e-commerce-platform->clientname->purchase-orders->sample-po->clientname-sample-po.pdf
+    file_path = get_file_path(client_name, po_folder, sample_po_folder, po_file_name)
 
-    file_path = f"{client_name}/{po_folder}/{sample_po_folder}/{po_file_name}"
-    po_mappings_folder_path = f"{client_name}/{po_folder}/{po_mapping}/{po_mappings_file_name}"
+    # e-commerce-platform->clientname->purchase-orders->po-mappings->clientname-po-mappings.csv
+    po_mappings_folder_path = get_file_path(client_name, po_folder, po_mapping, po_mappings_file_name)
 
-    try:
-        s3_client.upload_fileobj(file.file, AWS_BUCKET_NAME, file_path)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"File upload to S3 failed: {str(e)}")
+    # Save the uploaded file to the specified path
+    save_file(file, file_path)
+    # Calculate the hash of the uploaded file and verify its integrity
+    uploaded_file_hash = calculate_sha256(file_path)
+    if uploaded_file_hash != hash:
+        os.remove(file_path)
+        raise HTTPException(status_code=400, detail="Integrity check failed.")
 
+    # Process the CSV file and extract data
     try:
         extracted_data = convert_csv_to_json(page_id)
     except Exception as e:
-        s3_client.delete_object(Bucket=AWS_BUCKET_NAME, Key=file_path)
+        os.remove(file_path)
         raise HTTPException(status_code=500, detail=f"File processing failed: {str(e)}")
+    
+    # Process the json to csv 
+    # try:
+    #     data = convert_json_to_csv(extracted_data, po_mappings_folder_path, po_mappings_file_name)
+    # except Exception as e:
+    #         os.remove(file_path)
+    #         raise HTTPException(status_code=500, detail=f"File processing failed: {str(e)}")
 
     return {
         "filename": file.filename,
+        "file_hash": uploaded_file_hash,
         "saved_path": file_path,
         "status": "File uploaded and processed successfully",
         "extracted_data": extracted_data,
+        #"json_to_csv": data
     }
 
+# Handle Item Master files
 def handle_im_file(db: Session, file: UploadFile, client_name: str, hash: str, page_id: str):
+    # Determine the file extension
     file_extension = os.path.splitext(file.filename)[1]
+    # Construct file names
     im_file_name = f"{client_name}-{im_folder}{file_extension}"
     im_mappings_file_name = f"{client_name}-{im_mapping}.csv"
 
-    ensure_s3_folders(client_name, page_id)
+    # Construct file paths for Item Master and its mappings
+    # e-commerce-platform->clientname->item-master->clientname-item-master.xlsx
+    file_path = get_file_path(client_name, im_folder, "", im_file_name)
 
-    file_path = f"{client_name}/{im_folder}/{im_file_name}"
-    im_mappings_folder_path = f"{client_name}/{im_folder}/{im_mapping}/{im_mappings_file_name}"
+    # e-commerce-platform->clientname->item-master->item-master-mappings->clientname-item-master-mappings.csv
+    im_mappings_folder_path = get_file_path(client_name, im_folder, im_mapping, "")
 
-    try:
-        s3_client.upload_fileobj(file.file, AWS_BUCKET_NAME, file_path)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"File upload to S3 failed: {str(e)}")
+    # Save the uploaded file to the specified path
+    save_file(file, file_path)
+    # Calculate the hash of the uploaded file and verify its integrity
+    uploaded_file_hash = calculate_sha256(file_path)
+    if uploaded_file_hash != hash:
+        os.remove(file_path)
+        raise HTTPException(status_code=400, detail="Integrity check failed.")
 
+    # Process the CSV file and extract data
     try:
         extracted_data = convert_csv_to_json(page_id)
     except Exception as e:
-        s3_client.delete_object(Bucket=AWS_BUCKET_NAME, Key=file_path)
+        os.remove(file_path)
         raise HTTPException(status_code=500, detail=f"File processing failed: {str(e)}")
+
+    #  Process the json to csv 
+    # try:
+    #     data = convert_json_to_csv(extracted_data, im_mappings_folder_path, im_mappings_file_name)
+    # except Exception as e:
+    #         os.remove(file_path)
+    #         raise HTTPException(status_code=500, detail=f"File processing failed: {str(e)}")
 
     return {
         "filename": file.filename,
+        "file_hash": uploaded_file_hash,
         "saved_path": file_path,
         "status": "File uploaded and processed successfully",
         "extracted_data": extracted_data,
+        #"json_to_excel": data
     }
 
+# Handle Customer Master files
 def handle_cm_file(db: Session, file: UploadFile, client_name: str, hash: str, page_id: str):
+    # Determine the file extension
     file_extension = os.path.splitext(file.filename)[1]
+    # Construct file names
     cm_file_name = f"{client_name}-{cm_folder}{file_extension}"
     cm_mappings_file_name = f"{client_name}-{cm_mapping}.csv"
 
-    ensure_s3_folders(client_name, page_id)
+    # Construct file paths for Customer Master and its mappings
+    # e-commerce-platform->clientname->customer-master->clientname-customer-master.xlsx
+    file_path = get_file_path(client_name, cm_folder, "", cm_file_name)
 
-    file_path = f"{client_name}/{cm_folder}/{cm_file_name}"
-    cm_mappings_folder_path = f"{client_name}/{cm_folder}/{cm_mapping}/{cm_mappings_file_name}"
+    # e-commerce-platform->clientname->customer-master->customer-master-mappings->clientname-customer-master-mappings.csv
+    cm_mappings_folder_path = get_file_path(client_name, cm_folder, cm_mapping, "")
 
-    try:
-        s3_client.upload_fileobj(file.file, AWS_BUCKET_NAME, file_path)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"File upload to S3 failed: {str(e)}")
+    # Save the uploaded file to the specified path
+    save_file(file, file_path)
+    uploaded_file_hash = calculate_sha256(file_path)
+    if uploaded_file_hash != hash:
+        os.remove(file_path)
+        raise HTTPException(status_code=400, detail="Integrity check failed.")
 
+     # Process the CSV file and extract data
     try:
         extracted_data = convert_csv_to_json(page_id)
     except Exception as e:
-        s3_client.delete_object(Bucket=AWS_BUCKET_NAME, Key=file_path)
+        os.remove(file_path)
         raise HTTPException(status_code=500, detail=f"File processing failed: {str(e)}")
+    # Process the json to csv 
+    # try:
+    #     data = convert_json_to_csv(extracted_data, cm_mappings_folder_path, cm_mappings_file_name)
+    # except Exception as e:
+    #         os.remove(file_path)
+    #         raise HTTPException(status_code=500, detail=f"File processing failed: {str(e)}")
 
     return {
         "filename": file.filename,
+        "file_hash": uploaded_file_hash,
         "saved_path": file_path,
         "status": "File uploaded and processed successfully",
         "extracted_data": extracted_data,
+        #"json_to_excel": data
     }
-
+    
+# Endpoint to handle file uploads
 @router.post("/upload/", response_model=UploadPoSchema)
 def upload(
     db: Session = Depends(get_db),
     client_name: str = Query(..., description="Name of the client uploading the file"),
     file: UploadFile = File(...),
     current_user: User = Depends(security_scheme),
-    page_id: str = Header(..., description="Page identifier for proper file handling"),
+    hash: str = Header(..., description="SHA-256 hash value provided by the client for integrity check"),
+    page_id: str = Header(..., description="Page identifier for routing logic"),
+    authorization: str = Header(None, description="Bearer token for authentication"),
 ):
-    try:
-        if page_id == "po_page":
-            return handle_po_file(db, file, client_name, hash, page_id)
-        elif page_id == "item_master_page":
-            return handle_im_file(db, file, client_name, hash, page_id)
-        elif page_id == "customer_master_page":
-            return handle_cm_file(db, file, client_name, hash, page_id)
-        else:
-            raise HTTPException(status_code=400, detail="Invalid page_id.")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"File upload failed: {str(e)}")
+    """
+    Handle file uploads, validate hash, and authenticate using token.
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=403, detail="Authorization header missing or invalid")
+
+    token = authorization.split(" ")[1]
+    user = validate_token(token, db)
+    if not user:
+        raise HTTPException(status_code=403, detail="Invalid token or user not found")
+
+    # Define function mapping based on page_id
+    handle_file_upload = {
+        "po_page": handle_po_file,
+        "item_master_page": handle_im_file,
+        "customer_master_page": handle_cm_file
+    }
+
+    # Validate page_id and invoke respective function
+    if page_id not in handle_file_upload:
+        raise HTTPException(status_code=400, detail="Invalid page_id.")
+
+    return handle_file_upload[page_id](db, file, client_name, hash, page_id)

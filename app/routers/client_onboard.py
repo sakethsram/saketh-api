@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Header, Query
+from fastapi import APIRouter, Depends, HTTPException, Header
 from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import load_only
@@ -16,12 +16,9 @@ from app.models import EvenflowCustomerMaster
 from app.models import EvenflowProductMaster
 from app.schemas import ClientOnboardRequest
 from pprint import pprint
-from dotenv import load_dotenv
 import pandas as pd
 from sqlalchemy.exc import SQLAlchemyError
 import re
-import os
-import boto3
 from app.schemas import AccountingToolDetails 
 from typing import List 
 from sqlalchemy.exc import SQLAlchemyError
@@ -30,31 +27,25 @@ import logging
 router = APIRouter()
 security_scheme = HTTPBearer()
 
-load_dotenv()
-AWS_ACCESS_KEY = os.getenv('AWS_ACCESS_KEY')
-AWS_SECRET_KEY = os.getenv('AWS_SECRET_KEY')
-AWS_BUCKET_NAME = os.getenv('AWS_BUCKET_NAME')
-AWS_REGION = os.getenv('AWS_REGION')
-
-@router.get("/GetClients", response_model=List[ClientMasterSchema])
-def GetClients(
+@router.get("/get_clients", response_model=List[ClientMasterSchema])
+def get_clients(
     db: Session = Depends(get_db),
     current_user: User = Depends(security_scheme), 
     authorization: str = Header(None, description="Bearer token for authentication")
-):
+    ):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=403, detail="Authorization header missing or invalid")
 
     token = authorization.split(" ")[1]
-    payload = validate_token(token, db)
+    payload = validate_token(token, db) 
 
     clients = db.query(ClientMaster).all()
-    if not clients:
-        raise HTTPException(status_code=404, detail="Clients not found")
+    if not clients:raise HTTPException(status_code=404, detail="Clients not found")
     
-    return [{"id": client.id, "name": client.name} for client in clients]
+    return [ClientMasterSchema(id=client.id,name=client.name) for client in clients]
 
-@router.get("/AccountDetails", response_model=List[dict])
+
+@router.get("/account-details", response_model=List[dict])
 def get_accounting_details(
     db: Session = Depends(get_db),
     current_user: User = Depends(security_scheme),
@@ -76,10 +67,11 @@ def get_accounting_details(
     if not accounting_details:
         raise HTTPException(status_code=404, detail="Accounting Details not found")
 
+    # Transform response to match required format
     return [
         {
             "id": detail.id,
-            "accountingToolName": detail.accounting_tool_name 
+            "accountingToolName": detail.accounting_tool_name  # Convert to camelCase
         }
         for detail in accounting_details
     ]
@@ -87,35 +79,10 @@ def get_accounting_details(
 def dump_body(mapping_items):
     return [item.dict() for item in mapping_items]
 
-def write_po_mappings(df, client_name: str, bucket_name: str):
-    po_mapping_file = f"{client_name}-po-mapping.csv"
-    local_file_path = f"/tmp/{po_mapping_file}"
-
-    df.to_csv(local_file_path, index=False)
-    s3_path = f"{client_name}/purchase-orders/po-mappings/{po_mapping_file}"
-
-    upload_to_s3(local_file_path, bucket_name, s3_path)
-    print(f"PO mapping file {po_mapping_file} uploaded to S3.")
-
-def upload_to_s3(file_path: str, bucket_name: str, s3_path: str):
-    s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY,
-                         aws_secret_access_key=AWS_SECRET_KEY, region_name=AWS_REGION)
-
-    try:
-        s3_client.upload_file(file_path, bucket_name, s3_path)
-        print(f"File uploaded to S3: {s3_path}")
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            print(f"File {file_path} deleted from local folder.")
-        else:
-            print(f"File {file_path} not found locally.")
-
-    except FileNotFoundError:
-        print(f"The file {file_path} was not found")
-    except NoCredentialsError:
-        print("Credentials not available")
-    except Exception as e:
-        print(f"Error uploading file to S3: {str(e)}")
+def write_po_mappings(df, dfile):
+    df.to_excel(dfile, index=False)
+    print(f"File written: {dfile}")
+    return
 
 def onboard_distributors(db: Session, current_user: str, cdetails: object, distributors: list):
     try:
@@ -157,8 +124,9 @@ def onboard_distributors(db: Session, current_user: str, cdetails: object, distr
         if distys_instances:
             logging.debug(f"Inserting distributors: {[d.disty_id for d in distys_instances]}")
             db.bulk_save_objects(distys_instances)
-            db.flush() 
-            db.commit()
+            db.flush()  # Ensure data is written before commit
+            db.commit()  # Commit the transaction
+
             logging.info(f"Inserted {len(distys_instances)} new distributors into EvenflowDistys.")
 
         else:
@@ -178,63 +146,72 @@ def onboard_distributors(db: Session, current_user: str, cdetails: object, distr
     finally:
         db.close()
 
+
 def onboard_client_acccount(db, current_user, cdetails, accdetails):
     try:
+        # Validate input
         if not hasattr(cdetails, 'id') or not hasattr(cdetails, 'accountingtool'):
             raise ValueError("cdetails must have 'id' and 'accountingtool' attributes.")
         if not hasattr(accdetails, 'url') or not hasattr(accdetails, 'username') or not hasattr(accdetails, 'password'):
             raise ValueError("accdetails must have 'url', 'username', and 'password' attributes.")
 
+        # Convert URL to string
         accounting_tool_url = str(accdetails.url) if accdetails.url else None
+
         # Create an instance of EvenflowAccountingDetails
         client_acc_details = EvenflowAccountingDetails(
             client_id=cdetails.id,
             invoice_inputs="PO",  # Example hardcoded value, adjust if necessary
             invoice_number_auto=1,  # Use 1 for True (SMALLINT compatibility)
             accounting_tool_name=cdetails.accountingtool,
-            accounting_tool_url=accounting_tool_url, 
+            accounting_tool_url=accounting_tool_url,  # Ensure this is a string
             accounting_tool_userid=accdetails.username,
             accounting_tool_pwd=accdetails.password,
             created_by=current_user,
             modified_by=current_user,
-            active_flag=1 
+            active_flag=1  # Use 1 for True (SMALLINT compatibility)
         )
 
+        # Log the details of the instance
         print("\nClient Account details...")
         instance_dict = {key: value for key, value in client_acc_details.__dict__.items() if not key.startswith('_')}
         print(f"instance_dict: {instance_dict}\n")
 
+        # Add to the database and commit
         db.add(client_acc_details)
         db.commit()
         db.refresh(client_acc_details)
 
     except SQLAlchemyError as e:
+        # Rollback the transaction on database error
         db.rollback()
         print(f"Database error occurred: {str(e)}")
     except ValueError as e:
+        # Handle validation errors
         print(f"Validation error: {str(e)}")
     finally:
+        # Close the session if applicable
         db.close()
     
-def po_update_mappings(db, current_user, client_id, mapping, client_name: str, bucket_name: str):
-    po_mapping_file = f"{client_name}-po-mapping.csv"
-    local_file_path = f"/tmp/{po_mapping_file}"  
+def po_update_mappings(mapping):
+    po_mapping_file = "po_mapping.xlsx"
 
     transformed_data = []
     for entry in mapping:
+        print(entry)
         transformed_data.append({
             "SourceField": entry.sourceField,
             "TargetField": entry.targetField.split('.')[-1],
             "SampleValue": entry.value
-        })
+      })
 
     df = pd.DataFrame(transformed_data)
-    df.to_csv(local_file_path, index=False)
 
-    s3_path = f"{client_name}/purchase-orders/po-mappings/{po_mapping_file}"
+    print(df)
+    print()
 
-    upload_to_s3(local_file_path, bucket_name, s3_path)
-    print(f"Purchase Order mapping file {po_mapping_file} uploaded to S3.")
+    write_po_mappings(df, po_mapping_file)
+
 
 def update_customer_master_table(db: Session, current_user: str, client_id: int, customer_data):
     try:
@@ -279,6 +256,7 @@ def update_customer_master_table(db: Session, current_user: str, client_id: int,
         db.commit()
 
         print(f"Inserted customer data: {data_to_insert}")
+
     except SQLAlchemyError as e:
         db.rollback()
         print(f"Database error occurred: {str(e)}")
@@ -288,7 +266,9 @@ def update_customer_master_table(db: Session, current_user: str, client_id: int,
     except ValueError as e:
         print(f"Validation error: {str(e)}")
     finally:
+        # Ensure the database session is properly closed
         db.close()
+
 
 def update_item_master_table(db: Session, current_user: str, client_id: int, product_data):
     import pandas as pd
@@ -309,13 +289,16 @@ def update_item_master_table(db: Session, current_user: str, client_id: int, pro
             target_field = row['TargetField']
             sample_value = row['SampleValue']
             
+            # Skip rows with no value, "No value", or where TargetField is '-'
             if not sample_value or sample_value == "No value" or target_field.strip() == "-":
                 continue
 
+            # Map 'status' to 'active_flag'
             if target_field.lower() == 'status':
                 target_field = 'active_flag'
                 sample_value = 1 if str(sample_value).strip().lower() in ['active', '1', 'yes', 'true'] else 0
 
+            # Convert specific SMALLINT fields to integers
             if target_field in ['taxable', 'is_combo_product', 'active_flag']:
                 sample_value = 1 if str(sample_value).strip().lower() in ['true', '1', 'yes', 'active'] else 0
 
@@ -326,20 +309,25 @@ def update_item_master_table(db: Session, current_user: str, client_id: int, pro
                 'cf_az_tp_excl_gst', 'cf_mrp_with_tax', 'cf_fk_tp_excl_gst', 'cf_instamart_tp_excl_gst',
                 'cf_blinkit_tp'
             ]:
+                # Use regex to extract numeric value
                 match = re.search(r'[\d.]+', str(sample_value))
                 sample_value = float(match.group()) if match else 0.0
 
+            # Sanitize the column name (replace invalid characters with '_')
             sanitized_target_field = re.sub(r'[^a-zA-Z0-9_]', '_', target_field)
+
             data_to_insert[sanitized_target_field] = sample_value
 
         # Create an instance of the ORM model using the sanitized dictionary
         product_instance = EvenflowProductMaster(**data_to_insert)
+
         db.add(product_instance)
         db.commit()
 
         print(f"Inserted product data: {data_to_insert}")
 
     except SQLAlchemyError as e:
+        # Rollback the transaction if an error occurs
         db.rollback()
         print(f"Database error occurred: {str(e)}")
     except KeyError as e:
@@ -350,12 +338,12 @@ def update_item_master_table(db: Session, current_user: str, client_id: int, pro
     finally:
         db.close()
 
-def cm_update_mappings(db, current_user, client_id, mapping, client_name: str, bucket_name: str):
-    cm_mapping_file = f"{client_name}-custmaster-mapping.csv"
-    local_file_path = f"/tmp/{cm_mapping_file}"  
-
+def cm_update_mappings(db, current_user, client_id, mapping):
+    cm_mapping_file = "custmaster_mapping.xlsx"
+    
     transformed_data = []
     for entry in mapping:
+        print(entry)
         transformed_data.append({
             "SourceField": entry.sourceField,
             "TargetField": entry.targetField.split('.')[-1],
@@ -363,19 +351,19 @@ def cm_update_mappings(db, current_user, client_id, mapping, client_name: str, b
       })
 
     df = pd.DataFrame(transformed_data)
-    df.to_csv(local_file_path, index=False)
 
-    s3_path = f"{client_name}/customer-master/customer-master-mappings/{cm_mapping_file}"
+    print(df)
+    print()
 
-    upload_to_s3(local_file_path, bucket_name, s3_path)
-    print(f"Customer Master mapping file {cm_mapping_file} uploaded to S3.")
+    write_po_mappings(df, cm_mapping_file)
+    update_customer_master_table(db, current_user, client_id, df)
 
-def im_update_mappings(db, current_user, client_id, mapping, client_name: str, bucket_name: str):
-    im_mapping_file = f"{client_name}-itemmaster-mapping.csv"
-    local_file_path = f"/tmp/{im_mapping_file}" 
+def im_update_mappings(db, current_user, client_id, mapping):
+    im_mapping_file = "itemmaster_mapping.xlsx"
 
     transformed_data = []
     for entry in mapping:
+        print(entry)
         transformed_data.append({
             "SourceField": entry.sourceField,
             "TargetField": entry.targetField.split('.')[-1],
@@ -383,19 +371,18 @@ def im_update_mappings(db, current_user, client_id, mapping, client_name: str, b
       })
 
     df = pd.DataFrame(transformed_data)
-    df.to_csv(local_file_path, index=False)
 
-    s3_path = f"{client_name}/item-master/item-master-mappings/{im_mapping_file}"
- 
-    upload_to_s3(local_file_path, bucket_name, s3_path)
-    print(f"Item Master mapping file {im_mapping_file} uploaded to S3.")
+    print(df)
+    print()
+
+    write_po_mappings(df, im_mapping_file)
+    update_item_master_table(db, current_user, client_id, df)
     
 @router.post("/client_onboard")
-def ClientOnboard(
+def client_onboard(
     request: ClientOnboardRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(security_scheme),
-    client_name: str = Query(..., description="Name of the client uploading the file"),
     authorization: str = Header(None, description="Bearer token for authentication")
 ):
     print(f"==========current_user :{current_user}")
@@ -423,15 +410,15 @@ def ClientOnboard(
     
     # =============== po mappings details =============
     print("PO Mappings...")
-    po_update_mappings(db, current_user, cdetails.id, mapping=pomapping, client_name=client_name, bucket_name=AWS_BUCKET_NAME)
-
+    po_update_mappings(pomapping)
 
     # =============== item master mappings details =============
     print("Item Master mapping...")
-    im_update_mappings(db, current_user, cdetails.id, mapping=immapping, client_name=client_name, bucket_name=AWS_BUCKET_NAME)
+    cm_update_mappings(db, current_user, cdetails.id, cmapping)
+
     # =============== item master mappings details =============
     print("Customer Master mapping...")
-    cm_update_mappings(db, current_user, cdetails.id, mapping=cmapping, client_name=client_name, bucket_name=AWS_BUCKET_NAME)
+    im_update_mappings(db, current_user, cdetails.id, immapping)
     return {"message": "Client onboarded successfully"}
     
 	# client_onboard, evenflow_distys
