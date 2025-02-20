@@ -13,6 +13,9 @@ from app.dependencies import get_db
 from app.queries.customer import (
     GET_CUSTOMER_DETAILS
 )
+from app.queries.clientMaster import (
+    GET_CLIENT_DETAILS
+)
 from app.queries.productMaster import (
     GET_PRODUCT_DETAILS
 )
@@ -53,7 +56,7 @@ class CreateInvoiceInputRequest(BaseModel):
     boxNumber: str = Field(..., description="Box Numbetr", example="box number")
     notes: str = Field(..., description="Notes", example="any comment")
     supplierName: str = Field(..., description="Name of the supplier", example="Acme Corp.")
-
+    
     otherWarehouseName: Optional[str] = Field(None, description="Other Warehouse Name", example="xyz")
     otherWarehouseAddressLine1: Optional[str] = Field(None, description="Other Warehouse AddressLine1", example="xyz")
     otherWarehouseAddressLine2: Optional[str] = Field(None, description="Other Warehouse AddressLine2", example="xyz")
@@ -61,6 +64,29 @@ class CreateInvoiceInputRequest(BaseModel):
     otherWarehouseState: Optional[str] = Field(None, description="other Warehouse State", example="xyz")
     otherWarehouseCountry: Optional[str] = Field(None, description="other Warehouse Country", example="xyz")
     otherWarehousePostalCode: Optional[str] = Field(None, description="other Warehouse Postal Code", example="xyz")
+
+    billingAttention: Optional[str] = Field(None, description="Billing Attention", example="xyz")
+    billingAddressLine1: Optional[str] = Field(None, description="Billing Address Line1", example="xyz")
+    billingAaddressLine2: Optional[str] = Field(None, description="Billing Address Line", example="xyz")
+    billingCity: Optional[str] = Field(None, description="billing City", example="xyz")
+    billingState: Optional[str] = Field(None, description="billing State", example="xyz")        
+    billingCountry: Optional[str] = Field(None, description="billing Country", example="xyz")      
+    billingCode: Optional[str] = Field(None, description="billing Code", example="xyz")         
+    billingPhone: Optional[str] = Field(None, description="billing Phone", example="xyz")        
+    billingFax: Optional[str] = Field(None, description="billing Fax", example="xyz")          
+    shippingAttention: Optional[str] = Field(None, description="shipping Attention", example="xyz")   
+    shippingAddressLine1: Optional[str] = Field(None, description="shipping Address Line1", example="xyz")
+    shippingAddressLine2: Optional[str] = Field(None, description="shipping Address Line2", example="xyz")
+    shippingCity: Optional[str] = Field(None, description="shipping City", example="xyz")        
+    shippingState: Optional[str] = Field(None, description="shipping State", example="xyz")       
+    shippingCountry: Optional[str] = Field(None, description="shipping Country", example="xyz")     
+    shippingCode: Optional[str] = Field(None, description="shipping Code", example="xyz")        
+    shippingPhone: Optional[str] = Field(None, description="shipping Phone", example="xyz")       
+    shippingFax: Optional[str] = Field(None, description="shipping Fax", example="xyz")         
+    bankName: Optional[str] = Field(None, description="bank Name", example="xyz")
+    bankAccountNumber: int = Field(None, description="bank Account Number", example=28)
+    ifsc: Optional[str] = Field(None, description="ifsc", example="xyz")
+    accountType: Optional[str] = Field(None, description="account Type", example="xyz")
 
 # Updated endpoint for handling an array of objects
 @router.post("/generateInvoiceInputs", status_code=201, summary="Create new Invoice input")
@@ -98,9 +124,13 @@ def create_invoice_input(
                     iterationNumber = maxIterationNumber.iteration_id + 1
                 iterationIdFlag = False
 
+            values = {"client_id": request.clientId }
+            GET_CLIENT_MASTER_DETAILS_FORMATED = GET_CLIENT_DETAILS.format(**values)
+            clientInfo = db.execute(text(GET_CLIENT_MASTER_DETAILS_FORMATED)).mappings().first()
             values = {"customer_id": request.customerMasterId}
             GET_CUSTOMER_DETAILS_FORMATED = GET_CUSTOMER_DETAILS.format(**values)
             customerInfo = db.execute(text(GET_CUSTOMER_DETAILS_FORMATED)).mappings().first()
+
             values = {"sku": request.sku}
             GET_PRODUCT_DETAILS_FORMATED = GET_PRODUCT_DETAILS.format(**values)
             productInfo = db.execute(text(GET_PRODUCT_DETAILS_FORMATED)).mappings().first()
@@ -196,8 +226,32 @@ def create_invoice_input(
                 'otherWarehouseCountry': request.otherWarehouseCountry,
                 'otherWarehousePostalCode': request.otherWarehousePostalCode,
                 'modifiedBy': payload.get('user_login_id'),
-                'iterationNumber': iterationNumber
+                'iterationNumber': iterationNumber,
+                #-----
+                'billingAttention': customerInfo.billing_attention,
+                'billingAddressLine1': customerInfo.billing_address_line_1 ,
+                'billingAaddressLine2': customerInfo.billing_address_line_2 ,
+                'billingCity': customerInfo.billing_city ,
+                'billingState': customerInfo.billing_state ,
+                'billingCountry': customerInfo.billing_country ,
+                'billingCode': customerInfo.billing_code ,
+                'billingPhone': customerInfo.billing_phone ,
+                'billingFax': customerInfo.billing_fax ,
+                'shippingAttention': customerInfo.shipping_attention ,
+                'shippingAddressLine1': customerInfo.shipping_address_line_1 ,
+                'shippingAddressLine2': customerInfo.shipping_address_line_2 ,
+                'shippingCity': customerInfo.shipping_city ,
+                'shippingState': customerInfo.shipping_state ,
+                'shippingCountry': customerInfo.shipping_country ,
+                'shippingCode': customerInfo.shipping_code,
+                'shippingPhone': customerInfo.shipping_phone ,
+                'shippingFax': customerInfo.shipping_fax ,
+                'bankName': clientInfo.bank_name ,
+                'bankAccountNumber': clientInfo.bank_account_number ,
+                'ifsc': clientInfo.ifsc ,
+                'accountType': clientInfo.account_type
             }
+           #print(invoiceInputDict)
             new_po_query = text(CREATE_INVOICE_INPUT)
             db.execute(new_po_query, invoiceInputDict)
 
