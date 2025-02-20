@@ -7,36 +7,7 @@ import pandas as pd
 from datetime import datetime
 from app.config.config import settings
 
-base_folder = settings.base_folder
-
-def ensure_directory_exists(path: str):
-    if not os.path.exists(path):
-        os.makedirs(path)
-
-def calculate_sha256(file_path: str) -> str:
-    """Calculate the SHA-256 hash of a file."""
-    hash_sha256 = hashlib.sha256()
-    with open(file_path, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_sha256.update(chunk)
-    return hash_sha256.hexdigest()
-
-def get_file_path(client_name: str, primary_folder: str, subfolder: str, file_name: str) -> str:
-    """
-    Generate a file path based on the client name, folder type, and file name.
-    This is used for primary files (e.g., sample PO, Item Master, Customer Master).
-    """
-    folder_path = os.path.join(base_folder, client_name, primary_folder, subfolder)
-    ensure_directory_exists(folder_path)
-    return os.path.join(folder_path, file_name)
-
-def save_file(file: UploadFile, file_path: str):
-    """Save the uploaded file to the specified path."""
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
 def convert_csv_to_json(page_id):
-    # Mapping between page IDs and corresponding file names
     page_to_file_mapping = {
         "po_page": "evenflow-po-mappings.csv",
         "item_master_page": "evenflow-item-master-mappings.csv",
@@ -72,21 +43,4 @@ def convert_csv_to_json(page_id):
     except Exception as e:
         raise RuntimeError(f"Error processing file '{csv_file}': {str(e)}")
 
-def convert_json_to_csv(extracted_data, folder_path: str, file_name: str):
-    # Ensure directory exists
-    ensure_directory_exists(folder_path)
 
-    # Remove existing files in the folder
-    for existing_file in os.listdir(folder_path):
-        file_path = os.path.join(folder_path, existing_file)
-        if os.path.isfile(file_path):
-            os.remove(file_path)
-
-    # Create and save the new CSV file
-    csv_file_path = os.path.join(folder_path, file_name)
-    try:
-        df = pd.DataFrame(extracted_data)
-        df.to_csv(csv_file_path, index=False)
-        return {"message": f"CSV file saved at {csv_file_path}"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to save CSV: {str(e)}")
