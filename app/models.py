@@ -13,6 +13,9 @@ from sqlalchemy.sql import func
 from datetime import datetime
 from app.database import Base
 from sqlalchemy import Numeric, Date
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.sql import func
+
 
 
 class User(Base):
@@ -655,6 +658,15 @@ class EvenflowInvoicesLineItems(Base):
     product = relationship('EvenflowProductMaster', backref='line_items')
     warehouse = relationship('EvenflowWarehouses', backref='line_items')
 
+Base = declarative_base()
+
+class user_nameAndOTP(Base):
+    __tablename__ = "otp"
+
+    user_name = Column(String, primary_key=True, index=True)  # The user_name is unique here
+    otp = Column(Integer, nullable=False)
+    generated_at = Column(TIMESTAMP(timezone=False), default=datetime.now)  # timestamp without time zone
+    valid_until = Column(TIMESTAMP(timezone=False), nullable=False)  # timestamp without time zone
 
 
 

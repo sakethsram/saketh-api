@@ -4,6 +4,7 @@ from app.routers import auth, users
 from app.routers import get_distys
 from app.routers import common
 from app.routers import client_onboard
+from app.routers import password
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import load_clients
 from app.logging_config import setup_logging
@@ -65,6 +66,7 @@ app.include_router(invoiceInput.router)
 app.include_router(warehouse.router)
 app.include_router(reportingDetails.router)
 app.include_router(invoice_generation_routers.router,tags=['Invoice Generation API'])
+app.include_router(password.router)
 logging.debug("Debugging initialized")
 
 
