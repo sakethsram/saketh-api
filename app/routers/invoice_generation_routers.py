@@ -165,18 +165,24 @@ def update_invoice_inputs(
     current_user: str = Depends(security_scheme),
     authorization: str = Header(None, description="Bearer token for authentication"),
 )-> InvoiceInputsUpdateResponse:
-    validate_authentication(authorization=authorization,db=db)
-    updated_records = []
-    for update in request.updates:
-        update_data = update.model_dump(exclude_unset=True)
-        updated_invoices_input_obj = update_invoice_input(
-            db=db, invoice_inputs_id=update_data["id"], update_data=update_data
+    try:
+        validate_authentication(authorization=authorization,db=db)
+        updated_records = []
+        for update in request.updates:
+            update_data = update.model_dump(exclude_unset=True)
+            updated_invoices_input_obj = update_invoice_input(
+                db=db, invoice_inputs_id=update_data["id"], update_data=update_data
+            )
+            updated_records.append(updated_invoices_input_obj.to_dict())
+        return InvoiceInputsUpdateResponse(
+            message="Invoice inputs updated successfully for Preview",
+            updatedRecords=convertKeysToCamelCase(updated_records),
         )
-        updated_records.append(updated_invoices_input_obj.to_dict())
-    return InvoiceInputsUpdateResponse(
-        message="Invoice inputs updated successfully for Preview",
-        updatedRecords=convertKeysToCamelCase(updated_records),
-    )
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Internal Server Error", "message": str(e)}
+        )
 
 @router.post("/generateInvoice", status_code=201)
 def generate_invoice(
