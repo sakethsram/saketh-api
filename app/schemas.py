@@ -112,6 +112,29 @@ class ClientOnboardRequest(BaseModel):
     itemmaster_mapping: List[MappingItem]
     customermaster_mapping: List[MappingItem]
 
+class user_nameAndOTPSchema(BaseModel):
+    user_name: str
+    otp: int  # otp field to match the model
+    generated_at: datetime  # Add generated_at to match the model
+    valid_until: datetime  # Add valid_until to match the model
+   
+   
+   
+    class Config:
+        orm_mode = True
+
+
+class user_nameAndOTPSchema(BaseModel):
+    user_name: str
+    otp: int  # otp field to match the model
+    generated_at: datetime  # Add generated_at to match the model
+    valid_until: datetime  # Add valid_until to match the model
+   
+   
+   
+    class Config:
+        orm_mode = True
+
 
 
 
