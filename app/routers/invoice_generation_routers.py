@@ -93,66 +93,71 @@ def export_invoice_inputs_data(
     Export invoice data based on either PO number or invoice input ID.
     Returns an Excel file containing the invoice data.
     """
-    validate_authentication(authorization=authorization, db=db)
-    
-    if not po_number and not invoice_inputs_id:
-        raise HTTPException(
-            status_code=400, 
-            detail="Either poNumber or invoiceInputsId must be provided"
-        )
-    
-    list_of_invoices_inputs = []
-    filename_suffix = ""
-    
-    if po_number:
-        invoices = get_invoices_by_po(db, po_number)
-        if not invoices:
+    try:
+        validate_authentication(authorization=authorization, db=db)
+        if not po_number and not invoice_inputs_id:
             raise HTTPException(
-                status_code=404, 
-                detail="No invoices found for the given PO number"
+                status_code=400, 
+                detail="Either poNumber or invoiceInputsId must be provided"
             )
-        filename_suffix = f"po_{po_number}"
         
-        for invoice in invoices:
+        list_of_invoices_inputs = []
+        filename_suffix = ""
+        
+        if po_number:
+            invoices = get_invoices_by_po(db, po_number)
+            if not invoices:
+                raise HTTPException(
+                    status_code=404, 
+                    detail="No invoices found for the given PO number"
+                )
+            filename_suffix = f"po_{po_number}"
+    
+            for invoice in invoices:
+                invoice_dict = convertKeysToCamelCase(invoice.to_dict())
+                data = OrderedDict(
+                        (key, [value]) 
+                        for key, value in invoice_dict.items() 
+                        if key != "SaInstanceState"
+                    )
+                list_of_invoices_inputs.append(data)
+        
+        elif invoice_inputs_id:
+            invoice = get_invoice_by_id(db, invoice_inputs_id)
+            if not invoice:
+                raise HTTPException(
+                    status_code=404, 
+                    detail="Invoice not found for the given ID"
+                )
+            filename_suffix = f"invoice_{invoice_inputs_id}"
+            
             invoice_dict = convertKeysToCamelCase(invoice.to_dict())
             data = OrderedDict(
-                    (key, [value]) 
-                    for key, value in invoice_dict.items() 
-                    if key != "SaInstanceState"
-                )
+                        (key, [value]) 
+                        for key, value in invoice_dict.items() 
+                        if key != "SaInstanceState"
+                    )
             list_of_invoices_inputs.append(data)
-    
-    elif invoice_inputs_id:
-        invoice = get_invoice_by_id(db, invoice_inputs_id)
-        if not invoice:
-            raise HTTPException(
-                status_code=404, 
-                detail="Invoice not found for the given ID"
-            )
-        filename_suffix = f"invoice_{invoice_inputs_id}"
         
-        invoice_dict = convertKeysToCamelCase(invoice.to_dict())
-        data = OrderedDict(
-                    (key, [value]) 
-                    for key, value in invoice_dict.items() 
-                    if key != "SaInstanceState"
-                )
-        list_of_invoices_inputs.append(data)
-    
-    df = pd.concat([pd.DataFrame(data) for data in list_of_invoices_inputs])
-    
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-        df.to_excel(writer, index=False, sheet_name="InvoiceInputsData")
-    output.seek(0)
-    
-    return StreamingResponse(
-        output,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={
-            "Content-Disposition": f"attachment; filename=invoice_inputs_{filename_suffix}.xlsx"
-        },
-    )
+        df = pd.concat([pd.DataFrame(data) for data in list_of_invoices_inputs])
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+            df.to_excel(writer, index=False, sheet_name="InvoiceInputsData")
+        output.seek(0)
+        
+        return StreamingResponse(
+            output,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "Content-Disposition": f"attachment; filename=invoice_inputs_{filename_suffix}.xlsx"
+            },
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Internal Server Error", "message": str(e)}
+        )
+
 @router.patch("/updateInvoiceInputs", response_model=InvoiceInputsUpdateResponse)
 def update_invoice_inputs(
     request: InvoiceInputsUpdateRequest,
@@ -160,18 +165,24 @@ def update_invoice_inputs(
     current_user: str = Depends(security_scheme),
     authorization: str = Header(None, description="Bearer token for authentication"),
 )-> InvoiceInputsUpdateResponse:
-    validate_authentication(authorization=authorization,db=db)
-    updated_records = []
-    for update in request.updates:
-        update_data = update.model_dump(exclude_unset=True)
-        updated_invoices_input_obj = update_invoice_input(
-            db=db, invoice_inputs_id=update_data["id"], update_data=update_data
+    try:
+        validate_authentication(authorization=authorization,db=db)
+        updated_records = []
+        for update in request.updates:
+            update_data = update.dict(exclude_unset=True)
+            updated_invoices_input_obj = update_invoice_input(
+                db=db, invoice_inputs_id=update_data["id"], update_data=update_data
+            )
+            updated_records.append(updated_invoices_input_obj.to_dict())
+        return InvoiceInputsUpdateResponse(
+            message="Invoice inputs updated successfully for Preview",
+            updatedRecords=convertKeysToCamelCase(updated_records),
         )
-        updated_records.append(updated_invoices_input_obj.to_dict())
-    return InvoiceInputsUpdateResponse(
-        message="Invoice inputs updated successfully for Preview",
-        updatedRecords=convertKeysToCamelCase(updated_records),
-    )
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Internal Server Error", "message": str(e)}
+        )
 
 @router.post("/generateInvoice", status_code=201)
 def generate_invoice(
