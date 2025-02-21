@@ -117,7 +117,7 @@ def export_invoice_inputs_data(
             data = {
                 key: [value] 
                 for key, value in invoice_dict.items() 
-                if key != "_sa_instance_state"
+                if key != "SaInstanceState"
             }
             list_of_invoices_inputs.append(data)
     
@@ -138,7 +138,6 @@ def export_invoice_inputs_data(
         }
         list_of_invoices_inputs.append(data)
     
-    # Convert to DataFrame and export to Excel
     df = pd.concat([pd.DataFrame(data) for data in list_of_invoices_inputs])
     
     output = BytesIO()
