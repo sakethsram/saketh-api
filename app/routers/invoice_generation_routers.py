@@ -80,47 +80,79 @@ def list_invoice_inputs(
     return get_invoice_inputs_with_po_number(db, po_number, page_size, page_number)
 
 
-@router.get("/exportInvoiceInputsData/{poNumber}/{invoiceInputsId}", response_class=StreamingResponse)
-@router.get("/exportInvoiceInputsData/{poNumber}", response_class=StreamingResponse)
+@router.get("/exportInvoiceInputs", response_class=StreamingResponse)
 def export_invoice_inputs_data(
-    po_number: str = Path(..., alias="poNumber"),
-    invoice_inputs_id: Optional[int] =  Path(..., alias="invoiceInputsId"),
+    po_number: Optional[str] = Query(None, alias="poNumber"),
+    invoice_inputs_id: Optional[int] = Query(None, alias="invoiceInputsId"),
     db: Session = Depends(get_db),
     current_user: str = Depends(security_scheme),
     authorization: str = Header(None, description="Bearer token for authentication"),
-)->None:
-
-    validate_authentication(authorization=authorization,db=db)
-    list_of_invoices_inputs=[]
-    invoices = get_invoices_by_po(db, po_number)
-
-    if not invoices:
-        raise HTTPException(status_code=404, detail="No invoices found for the given PO number")
-
-    if invoice_inputs_id:
-        invoice_obj = get_invoice_by_id(db=db,invoice_obj=invoices[0],invoice_id=invoice_inputs_id)
-        invoice_dict = convertKeysToCamelCase(invoice_obj.__dict__)
-        data = {key: [value] for key, value in invoice_dict.items() if key != "_sa_instance_state"}
-        list_of_invoices_inputs.append(data)
-    else:
-        for invoice_obj in invoices:
-            invoice_dict = convertKeysToCamelCase(invoice_obj.__dict__)
-            data = {key: [value] for key, value in invoice_dict.items() if key != "_sa_instance_state"}
+) -> StreamingResponse:
+    """
+    Export invoice data based on either PO number or invoice input ID.
+    Returns an Excel file containing the invoice data.
+    """
+    validate_authentication(authorization=authorization, db=db)
+    
+    if not po_number and not invoice_inputs_id:
+        raise HTTPException(
+            status_code=400, 
+            detail="Either poNumber or invoiceInputsId must be provided"
+        )
+    
+    list_of_invoices_inputs = []
+    filename_suffix = ""
+    
+    if po_number:
+        invoices = get_invoices_by_po(db, po_number)
+        if not invoices:
+            raise HTTPException(
+                status_code=404, 
+                detail="No invoices found for the given PO number"
+            )
+        filename_suffix = f"po_{po_number}"
+        
+        for invoice in invoices:
+            invoice_dict = convertKeysToCamelCase(invoice.__dict__)
+            data = {
+                key: [value] 
+                for key, value in invoice_dict.items() 
+                if key != "_sa_instance_state"
+            }
             list_of_invoices_inputs.append(data)
-
-    df = pd.DataFrame(list_of_invoices_inputs)
+    
+    elif invoice_inputs_id:
+        invoice = get_invoice_by_id(db, invoice_inputs_id)
+        if not invoice:
+            raise HTTPException(
+                status_code=404, 
+                detail="Invoice not found for the given ID"
+            )
+        filename_suffix = f"invoice_{invoice_inputs_id}"
+        
+        invoice_dict = convertKeysToCamelCase(invoice.__dict__)
+        data = {
+            key: [value] 
+            for key, value in invoice_dict.items() 
+            if key != "SaInstanceState"
+        }
+        list_of_invoices_inputs.append(data)
+    
+    # Convert to DataFrame and export to Excel
+    df = pd.concat([pd.DataFrame(data) for data in list_of_invoices_inputs])
+    
     output = BytesIO()
     with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
         df.to_excel(writer, index=False, sheet_name="InvoiceInputsData")
     output.seek(0)
+    
     return StreamingResponse(
         output,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={
-            "Content-Disposition": f"attachment; filename=invoice_inputs_{invoice_obj.id}.xlsx"
+            "Content-Disposition": f"attachment; filename=invoice_inputs_{filename_suffix}.xlsx"
         },
     )
-
 @router.patch("/updateInvoiceInputs", response_model=InvoiceInputsUpdateResponse)
 def update_invoice_inputs(
     request: InvoiceInputsUpdateRequest,
