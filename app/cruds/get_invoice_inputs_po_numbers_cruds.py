@@ -30,8 +30,8 @@ def get_in_progress_po_numbers(db: Session) -> list[EvenflowPurchaseOrder]:
         )
     ).all()
 
-def get_invoice_by_id(db: Session, invoice_obj:EvenflowInvoiceInputs,invoice_id: int):
-    return db.query(EvenflowInvoiceInputs).filter(EvenflowInvoiceInputs.id == invoice_obj.id).first()
+def get_invoice_by_id(db: Session, invoice_inputs_id: int):
+    return db.query(EvenflowInvoiceInputs).filter(EvenflowInvoiceInputs.id == invoice_inputs_id).first()
 
 def get_invoices_by_po(db: Session, po_number: str):
     return db.query(EvenflowInvoiceInputs).filter(EvenflowInvoiceInputs.purchase_order_number == po_number).all()
@@ -74,7 +74,7 @@ def get_invoice_inputs_with_po_number(
             paymentDueDate=r[4],
             paymentTerms=f"Due in {r[5]} Days",
             poFilePath=r[6],
-            invoiceInputs=f"http://localhost:8000/exportInvoiceInputsData/{po_number}?invoiceInputsId={r[0]}",
+            invoiceInputs=f"http://localhost:8000/exportInvoiceInputsData/?invoiceInputsId={r[0]}",
         )
         for r in results
     ]
