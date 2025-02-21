@@ -168,7 +168,7 @@ def update_invoice_inputs(
     validate_authentication(authorization=authorization,db=db)
     updated_records = []
     for update in request.updates:
-        update_data = update.model_dump(exclude_unset=True)
+        update_data = update.dict(exclude_unset=True)
         updated_invoices_input_obj = update_invoice_input(
             db=db, invoice_inputs_id=update_data["id"], update_data=update_data
         )
