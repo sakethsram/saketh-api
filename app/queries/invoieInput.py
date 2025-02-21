@@ -13,7 +13,13 @@ CREATE_INVOICE_INPUT = """
             invoice_generated_acc_tool, po_file_path,  box_number, total_box_count, 
             active_flag, created_by, other_warehouse_name, other_warehouse_address_line_1,
             other_warehouse_address_line_2, other_warehouse_city, other_warehouse_state, other_warehouse_country,
-            other_warehouse_postal_code, modified_by, iteration_id
+            other_warehouse_postal_code, modified_by, iteration_id, billing_attention ,
+            billing_address_line_1 , billing_address_line_2 , billing_city , billing_state ,
+            billing_country , billing_code , billing_phone , billing_fax ,
+            shipping_attention , shipping_address_line_1 , shipping_address_line_2 , shipping_city ,
+            shipping_state , shipping_country , shipping_code , shipping_phone ,
+            shipping_fax , bank_name , bank_account_number , ifsc ,
+            account_type
 
 	    )
 	    VALUES (
@@ -29,8 +35,14 @@ CREATE_INVOICE_INPUT = """
             :invoiceGeneratedAccTool, :poFilePath, :boxNumber, :totalBoxCount, 
             :activeFlag, :createdBy, :otherWarehouseName, :otherWarehouseAddressLine1,
             :otherWarehouseAddressLine2, :otherWarehouseCity, :otherWarehouseState, :otherWarehouseCountry,
-            :otherWarehousePostalCode, :modifiedBy, :iterationNumber
-	)
+            :otherWarehousePostalCode, :modifiedBy, :iterationNumber, :billingAttention,   
+            :billingAddressLine1, :billingAaddressLine2, :billingCity, :billingState,        
+            :billingCountry, :billingCode, :billingPhone, :billingFax,          
+            :shippingAttention, :shippingAddressLine1, :shippingAddressLine2, :shippingCity,       
+            :shippingState, :shippingCountry, :shippingCode, :shippingPhone,       
+            :shippingFax, :bankName, :bankAccountNumber, :ifsc, 
+            :accountType         
+        )
 """
 
 
