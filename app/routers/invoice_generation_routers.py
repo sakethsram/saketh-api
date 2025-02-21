@@ -1,4 +1,5 @@
 """Invoice Generation Routes."""
+from collections import OrderedDict
 from datetime import datetime
 from io import BytesIO
 from typing import Optional
@@ -113,12 +114,12 @@ def export_invoice_inputs_data(
         filename_suffix = f"po_{po_number}"
         
         for invoice in invoices:
-            invoice_dict = convertKeysToCamelCase(invoice.__dict__)
-            data = {
-                key: [value] 
-                for key, value in invoice_dict.items() 
-                if key != "SaInstanceState"
-            }
+            invoice_dict = convertKeysToCamelCase(invoice.to_dict())
+            data = OrderedDict(
+                    (key, [value]) 
+                    for key, value in invoice_dict.items() 
+                    if key != "SaInstanceState"
+                )
             list_of_invoices_inputs.append(data)
     
     elif invoice_inputs_id:
@@ -130,12 +131,12 @@ def export_invoice_inputs_data(
             )
         filename_suffix = f"invoice_{invoice_inputs_id}"
         
-        invoice_dict = convertKeysToCamelCase(invoice.__dict__)
-        data = {
-            key: [value] 
-            for key, value in invoice_dict.items() 
-            if key != "SaInstanceState"
-        }
+        invoice_dict = convertKeysToCamelCase(invoice.to_dict())
+        data = OrderedDict(
+                    (key, [value]) 
+                    for key, value in invoice_dict.items() 
+                    if key != "SaInstanceState"
+                )
         list_of_invoices_inputs.append(data)
     
     df = pd.concat([pd.DataFrame(data) for data in list_of_invoices_inputs])
@@ -169,7 +170,7 @@ def update_invoice_inputs(
         updated_records.append(updated_invoices_input_obj.to_dict())
     return InvoiceInputsUpdateResponse(
         message="Invoice inputs updated successfully for Preview",
-        updatedRecords=updated_records,
+        updatedRecords=convertKeysToCamelCase(updated_records),
     )
 
 @router.post("/generateInvoice", status_code=201)
