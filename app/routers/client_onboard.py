@@ -281,9 +281,6 @@ def update_customer_master_table(db: Session, current_user: str, client_id: int,
         db.close()
 
 def update_item_master_table(db: Session, current_user: str, client_id: int, product_data):
-    import pandas as pd
-    import re
-
     try:
         if isinstance(product_data, list):
             product_data = pd.DataFrame(product_data)
@@ -324,6 +321,7 @@ def update_item_master_table(db: Session, current_user: str, client_id: int, pro
 
         # Create an instance of the ORM model using the sanitized dictionary
         product_instance = EvenflowProductMaster(**data_to_insert)
+        
         db.add(product_instance)
         db.commit()
 
@@ -341,7 +339,7 @@ def update_item_master_table(db: Session, current_user: str, client_id: int, pro
         db.close()
 
 def cm_update_mappings(db, current_user, client_id, mapping, client_name: str, bucket_name: str):
-    cm_mapping_file = f"{client_name}-custmaster-mapping.csv"
+    cm_mapping_file = f"{client_name}-customermaster-mapping.csv"
     local_file_path = f"/tmp/{cm_mapping_file}"  
 
     transformed_data = []
@@ -358,6 +356,7 @@ def cm_update_mappings(db, current_user, client_id, mapping, client_name: str, b
     s3_path = f"{client_name}/customer-master/customer-master-mappings/{cm_mapping_file}"
 
     upload_to_s3(local_file_path, bucket_name, s3_path)
+    update_customer_master_table(db, current_user, client_id, df)
     print(f"Customer Master mapping file {cm_mapping_file} uploaded to S3.")
 
 def im_update_mappings(db, current_user, client_id, mapping, client_name: str, bucket_name: str):
@@ -378,6 +377,7 @@ def im_update_mappings(db, current_user, client_id, mapping, client_name: str, b
     s3_path = f"{client_name}/item-master/item-master-mappings/{im_mapping_file}"
  
     upload_to_s3(local_file_path, bucket_name, s3_path)
+    update_item_master_table(db, current_user, client_id, df)
     print(f"Item Master mapping file {im_mapping_file} uploaded to S3.")
     
 @router.post("/client_onboard")

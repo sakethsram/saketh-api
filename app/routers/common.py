@@ -136,7 +136,13 @@ def upload(
     file: UploadFile = File(...),
     current_user: User = Depends(security_scheme),
     page_id: str = Header(..., description="Page identifier for proper file handling"),
+    authorization: str = Header(None, description="Bearer token for authentication")
 ):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=403, detail="Authorization header missing or invalid")
+
+    token = authorization.split(" ")[1]
+    payload = validate_token(token, db)
     try:
         if page_id == "po_page":
             return handle_po_file(db, file, client_name, hash, page_id)
