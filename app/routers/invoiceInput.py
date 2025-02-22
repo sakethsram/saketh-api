@@ -1,40 +1,35 @@
-from fastapi import APIRouter, Depends, HTTPException, Header
+from datetime import date
+from typing import List
+from typing import Optional
+
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import Header
+from fastapi import HTTPException
 from fastapi.security import HTTPBearer
-from app.models import User
-from app.security import validate_token
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+from pydantic import Field
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
-from app.utils.logger  import logger
-from datetime import date
-from typing import List, Optional
+
 from app.dependencies import get_db
+from app.models import User
+from app.queries.accountingDetails import GET_ACCOUNTING_DETAILS
+from app.queries.clientMaster import GET_CLIENT_DETAILS
+
 #from app.security import decode_access_token
-from app.queries.customer import (
-    GET_CUSTOMER_DETAILS
-)
-from app.queries.clientMaster import (
-    GET_CLIENT_DETAILS
-)
-from app.queries.productMaster import (
-    GET_PRODUCT_DETAILS
-)
-from app.queries.purchaseOrder import (
-    GET_PURCHASE_ORDER_DETAILS,
-    UPDATE_PURCHASE_ORDER_DETAILS
-)
-from app.queries.accountingDetails import (
-    GET_ACCOUNTING_DETAILS
-)
-from app.queries.purchaseItemLineItem import (
-    GET_PURCHASE_ORDER_LINE_ITEM,
-    UPDATE_PURCHASE_ORDER_LINE_ITEM
-)
-from app.queries.invoieInput import (
-    CREATE_INVOICE_INPUT,
-    GET_MAX_ITERATION_NUMBER,
-    UPDATE_PROCESSING_STATUS
-)
+from app.queries.customer import GET_CUSTOMER_DETAILS
+from app.queries.invoieInput import CREATE_INVOICE_INPUT
+from app.queries.invoieInput import GET_MAX_ITERATION_NUMBER
+from app.queries.invoieInput import UPDATE_PROCESSING_STATUS
+from app.queries.invoieInput import UPDATE_TAX_COLUMNS
+from app.queries.productMaster import GET_PRODUCT_DETAILS
+from app.queries.purchaseItemLineItem import GET_PURCHASE_ORDER_LINE_ITEM
+from app.queries.purchaseItemLineItem import UPDATE_PURCHASE_ORDER_LINE_ITEM
+from app.queries.purchaseOrder import GET_PURCHASE_ORDER_DETAILS
+from app.queries.purchaseOrder import UPDATE_PURCHASE_ORDER_DETAILS
+from app.security import validate_token
+from app.utils.logger import logger
 
 router = APIRouter()
 security_scheme = HTTPBearer()
@@ -65,28 +60,46 @@ class CreateInvoiceInputRequest(BaseModel):
     otherWarehouseCountry: Optional[str] = Field(None, description="other Warehouse Country", example="xyz")
     otherWarehousePostalCode: Optional[str] = Field(None, description="other Warehouse Postal Code", example="xyz")
 
-    billingAttention: Optional[str] = Field(None, description="Billing Attention", example="xyz")
-    billingAddressLine1: Optional[str] = Field(None, description="Billing Address Line1", example="xyz")
-    billingAaddressLine2: Optional[str] = Field(None, description="Billing Address Line", example="xyz")
-    billingCity: Optional[str] = Field(None, description="billing City", example="xyz")
-    billingState: Optional[str] = Field(None, description="billing State", example="xyz")        
-    billingCountry: Optional[str] = Field(None, description="billing Country", example="xyz")      
-    billingCode: Optional[str] = Field(None, description="billing Code", example="xyz")         
-    billingPhone: Optional[str] = Field(None, description="billing Phone", example="xyz")        
-    billingFax: Optional[str] = Field(None, description="billing Fax", example="xyz")          
-    shippingAttention: Optional[str] = Field(None, description="shipping Attention", example="xyz")   
-    shippingAddressLine1: Optional[str] = Field(None, description="shipping Address Line1", example="xyz")
-    shippingAddressLine2: Optional[str] = Field(None, description="shipping Address Line2", example="xyz")
-    shippingCity: Optional[str] = Field(None, description="shipping City", example="xyz")        
-    shippingState: Optional[str] = Field(None, description="shipping State", example="xyz")       
-    shippingCountry: Optional[str] = Field(None, description="shipping Country", example="xyz")     
-    shippingCode: Optional[str] = Field(None, description="shipping Code", example="xyz")        
-    shippingPhone: Optional[str] = Field(None, description="shipping Phone", example="xyz")       
-    shippingFax: Optional[str] = Field(None, description="shipping Fax", example="xyz")         
-    bankName: Optional[str] = Field(None, description="bank Name", example="xyz")
-    bankAccountNumber: int = Field(None, description="bank Account Number", example=28)
-    ifsc: Optional[str] = Field(None, description="ifsc", example="xyz")
-    accountType: Optional[str] = Field(None, description="account Type", example="xyz")
+    # billingAttention: Optional[str] = Field(None, description="Billing Attention", example="xyz")
+    # billingAddressLine1: Optional[str] = Field(None, description="Billing Address Line1", example="xyz")
+    # billingAaddressLine2: Optional[str] = Field(None, description="Billing Address Line", example="xyz")
+    # billingCity: Optional[str] = Field(None, description="billing City", example="xyz")
+    # billingState: Optional[str] = Field(None, description="billing State", example="xyz")        
+    # billingCountry: Optional[str] = Field(None, description="billing Country", example="xyz")      
+    # billingCode: Optional[str] = Field(None, description="billing Code", example="xyz")         
+    # billingPhone: Optional[str] = Field(None, description="billing Phone", example="xyz")        
+    # billingFax: Optional[str] = Field(None, description="billing Fax", example="xyz")          
+    # shippingAttention: Optional[str] = Field(None, description="shipping Attention", example="xyz")   
+    # shippingAddressLine1: Optional[str] = Field(None, description="shipping Address Line1", example="xyz")
+    # shippingAddressLine2: Optional[str] = Field(None, description="shipping Address Line2", example="xyz")
+    # shippingCity: Optional[str] = Field(None, description="shipping City", example="xyz")        
+    # shippingState: Optional[str] = Field(None, description="shipping State", example="xyz")       
+    # shippingCountry: Optional[str] = Field(None, description="shipping Country", example="xyz")     
+    # shippingCode: Optional[str] = Field(None, description="shipping Code", example="xyz")        
+    # shippingPhone: Optional[str] = Field(None, description="shipping Phone", example="xyz")       
+    # shippingFax: Optional[str] = Field(None, description="shipping Fax", example="xyz")         
+    # bankName: Optional[str] = Field(None, description="bank Name", example="xyz")
+    # bankAccountNumber: int = Field(None, description="bank Account Number", example=28)
+    # ifsc: Optional[str] = Field(None, description="ifsc", example="xyz")
+    # accountType: Optional[str] = Field(None, description="account Type")
+
+    # #added new columns by dheeraj
+    # brandName: Optional[str] = Field(None,description="brand Name",example="xyz")  
+    # brandPan:Optional[str] = Field(None,description="brand Pan",example="xyz") 
+    # brandGstin:Optional[str] = Field(None,description="brand Gstin",example="xyz") 
+    # brandRegAddressLine1:Optional[str] = Field(None,description="brand Reg Address Line 1",example="xyz")  
+    # brandRegAddressLine2: Optional[str] = Field(None, description="brand Reg Address Line 2", example="xyz")
+    # brandRegCity: Optional[str] = Field(None, description="brand Reg City", example="xyz")
+    # brandRegState: Optional[str] = Field(None, description="brand Reg State", example="xyz")
+    # brandRegCountry: Optional[str] = Field(None, description="brand Reg Country", example='xyz')
+    # cgstPercentage: Optional[int] = Field(..., description="cgst Percentage", example=6)
+    # cgstAmount: Optional[int] = Field(..., description="cgst Amount", example=6)
+    # sgstPercentage: Optional[int] = Field(..., description="sgst Percentage", example=6)
+    # sgstAmount: Optional[int] = Field(..., description="sgst Amount", example=6)
+    # igstPercentage: Optional[int] = Field(..., description="igst Percentage", example=6)
+    # igstAmount: Optional[int] = Field(..., description="igst_amount", example=6)
+    # amount: Optional[int] = Field(..., description="amount", example=6)
+ 
 
 # Updated endpoint for handling an array of objects
 @router.post("/generateInvoiceInputs", status_code=201, summary="Create new Invoice input")
@@ -133,6 +146,7 @@ def create_invoice_input(
 
             values = {"sku": request.sku}
             GET_PRODUCT_DETAILS_FORMATED = GET_PRODUCT_DETAILS.format(**values)
+
             productInfo = db.execute(text(GET_PRODUCT_DETAILS_FORMATED)).mappings().first()
             if not productInfo:
                 logger.error(f"Product details not found for the sku {request.sku}")
@@ -202,9 +216,7 @@ def create_invoice_input(
                 'itemPrice': productInfo.rate,
                 'itemTaxExemptionReason': productInfo.exemption_reason,
                 'isInclusiveTax': productInfo.is_inclusive_tax,
-                'itemTax': productInfo.intra_state_tax_name,
-                'itemTaxType': productInfo.intra_state_tax_type,
-                'itemTaxPercentage': productInfo.intra_state_tax_rate,
+                
                 'notes': request.notes,
                 'fiscalQuarter': orderedFiscalQuarter,
                 'poMonth': orderedDate.month,
@@ -249,7 +261,26 @@ def create_invoice_input(
                 'bankName': clientInfo.bank_name ,
                 'bankAccountNumber': clientInfo.bank_account_number ,
                 'ifsc': clientInfo.ifsc ,
-                'accountType': clientInfo.account_type
+                'accountType': clientInfo.account_type,
+
+                # ----
+                'brandName':  clientInfo.name,
+                'brandPan':  clientInfo.pan,
+                'brandGstin':  clientInfo.gst,
+                'brandRegAddressLine1':  clientInfo.client_reg_address_line_1,
+                'brandRegAddressLine2':  clientInfo.client_reg_address_line_2,
+                'brandRegCity':  clientInfo.client_reg_city,
+                'brandRegState':  clientInfo.client_reg_state,
+                'brandRegCountry': clientInfo.client_reg_country,
+
+
+                # 'itemTax': productInfo.intra_state_tax_name,
+                # 'itemTaxType': productInfo.intra_state_tax_type,
+                # 'itemTaxPercentage': productInfo.intra_state_tax_rate,
+                
+  
+
+
             }
            #print(invoiceInputDict)
             new_po_query = text(CREATE_INVOICE_INPUT)
@@ -266,6 +297,12 @@ def create_invoice_input(
             values = { 'po_number': purchaseOrderNumber, 'fulfilledQty': request.fulfilledQty }
             UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED = UPDATE_PURCHASE_ORDER_DETAILS.format(**values)
             db.execute(text(UPDATE_PURCHASE_ORDER_DETAILS_FORMATTED))
+ 
+
+            values = {'customer_master_id':request.customerMasterId,'product_master_id':productInfo.id,'poLineItemId': request.poLineItemId }
+            UPDATE_TAX_COLUMNS_FORMATTED = UPDATE_TAX_COLUMNS.format(**values)
+            db.execute(text(UPDATE_TAX_COLUMNS_FORMATTED))
+
         db.commit()
         return {"message": "Invoice line item created successfully"}
     except Exception as e:
