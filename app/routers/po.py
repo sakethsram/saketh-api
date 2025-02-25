@@ -122,20 +122,6 @@ def list_po(
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
     
     condition = ""
-    # processing_status = ""
-
-    # if status == "Partial PO(Invoices)":
-    #     processing_status = "PARTIALLY_FULLFILLED"
-    # elif status == "Fullfilled PO(Invoices)":
-    #     processing_status = "FULLFILLED"
-    # elif status == "Partial PO(Invoice Inputs)":
-    #     processing_status = "IN_PROGRESS_PARTIAL"
-    # elif status == "Fulfilled PO(Invoice Inputs)":
-    #     processing_status = "IN_PROGRESS_FULL"
-    # elif status == "Closed":
-    #     processing_status = "CLOSED"
-    # elif status == "Open":
-    #     processing_status = "OPEN"
     if poNumber:
         condition += f"WHERE RESULT.po_number = '{poNumber}' "
     if startDate:
