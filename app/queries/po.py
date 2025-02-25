@@ -203,7 +203,12 @@ PO_DETAILS_QUERY_BY_PO_NUMBER = """
         cancelled_total_cost,
 	    delivery_address,
         delivery_address_to,
-        po_processing_status
+        CASE WHEN po_processing_status = 'PARTIALLY_FULFILLED' THEN 'Partial PO(Invoices)' 
+                     WHEN po_processing_status = 'FULFILLED' THEN 'Fulfilled PO(Invoices)'
+                     WHEN po_processing_status = 'OPEN' THEN 'Open'
+                     WHEN po_processing_status = 'IN_PROGRESS_PARTIAL' THEN 'Partial PO(Invoice Inputs)'
+                     WHEN po_processing_status = 'IN_PROGRESS_FULL' THEN 'Fulfilled PO(Invoice Inputs)'
+                     WHEN po_processing_status = 'CLOSED' THEN 'Closed' END as po_processing_status
     FROM
 	    evenflow_purchase_orders 
     WHERE 
