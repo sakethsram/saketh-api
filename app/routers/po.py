@@ -102,6 +102,7 @@ def list_po(
     poNumber: Optional[str] = Query(None, description="Filter by PO Number"),
     startDate: Optional[str] = Query(None, description="Start date filter (YYYY-MM-DD)"),
     endDate: Optional[str] = Query(None, description="End date filter (YYYY-MM-DD)"),
+    status: Optional[str]  = Query(None, description="Filter by processing status"),
     db: Session = Depends(get_db),
     current_user: str = Depends(security_scheme),
     authorization: str = Header(None, description="Bearer token for authentication")
@@ -121,13 +122,29 @@ def list_po(
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
     
     condition = ""
+    # processing_status = ""
+
+    # if status == "Partial PO(Invoices)":
+    #     processing_status = "PARTIALLY_FULLFILLED"
+    # elif status == "Fullfilled PO(Invoices)":
+    #     processing_status = "FULLFILLED"
+    # elif status == "Partial PO(Invoice Inputs)":
+    #     processing_status = "IN_PROGRESS_PARTIAL"
+    # elif status == "Fulfilled PO(Invoice Inputs)":
+    #     processing_status = "IN_PROGRESS_FULL"
+    # elif status == "Closed":
+    #     processing_status = "CLOSED"
+    # elif status == "Open":
+    #     processing_status = "OPEN"
     if poNumber:
-        condition += f" WHERE RESULT.po_number = '{poNumber}' "
+        condition += f"WHERE RESULT.po_number = '{poNumber}' "
     if startDate:
         condition += f"{'AND' if condition else 'WHERE'} RESULT.po_created >= '{startDate}' "
     if endDate:
         condition += f"{'AND' if condition else 'WHERE'} RESULT.po_created <= '{endDate}' "
-    
+    if status:
+        condition += f"{'AND' if condition else 'WHERE'} RESULT.type = '{status}' "
+
     values = {"page_size": pageSize, "page_number": pageNumber, "whereCondition": condition}
     FETCH_PO_LISTING_QUERY_FORMATED = FETCH_PO_LISTING_QUERY.format(**values)
     FETCH_TOTAL_COUNT_PO_LISTING_QUERY_FORMATED = FETCH_TOTAL_COUNT_PO_LISTING_QUERY.format(**values)
