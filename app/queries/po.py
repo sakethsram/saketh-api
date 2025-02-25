@@ -208,7 +208,7 @@ PO_DETAILS_QUERY_BY_PO_NUMBER = """
                      WHEN po_processing_status = 'OPEN' THEN 'Open'
                      WHEN po_processing_status = 'IN_PROGRESS_PARTIAL' THEN 'Partial PO(Invoice Inputs)'
                      WHEN po_processing_status = 'IN_PROGRESS_FULL' THEN 'Fulfilled PO(Invoice Inputs)'
-                     WHEN po_processing_status = 'CLOSED' THEN 'Closed' END as po_pprocessing_status
+                     WHEN po_processing_status = 'CLOSED' THEN 'Closed' END as po_processing_status
     FROM
 	    evenflow_purchase_orders 
     WHERE 
