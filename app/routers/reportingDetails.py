@@ -76,7 +76,7 @@ def get_warehouse_details(
         logger.error(f"Failed to getPurchaseOrderReportingDetails: {e}")
         raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
 
-@router.get("/getInvoicesReportingDetails")
+@router.get("/getInvoiceReportingDetails")
 def get_warehouse_details(
     db: Session = Depends(get_db),
     current_user: User = Depends(security_scheme),
