@@ -173,7 +173,6 @@ FETCH_TOTAL_COUNT_PO_LISTING_QUERY = """
         ) AS RESULT {whereCondition}
     """
 
-
 PO_DETAILS_QUERY_BY_PO_NUMBER = """
     SELECT  
         id as purchase_order_id,
