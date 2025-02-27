@@ -43,7 +43,7 @@ class CreateInvoiceInputRequest(BaseModel):
     poLineItemId: int = Field(..., description="po line item id", example = 1)
     ASIN:  str = Field(..., description="ASIN", example="ASIN number")
     sku: str = Field(..., description="SKU", example="SKU number")
-    appointmentId: int = Field(..., description="appoinment id", example=101)
+    appointmentId: str = Field(..., description="appoinment id", example=101)
     appointmentDate: date = Field(..., description="appintment date", example="2025=01-01")
     fulfilledQty: int = Field(..., description="Fulfilled quantity", example=10)
     placeOfSupply: Optional[str] = Field(None, description="Place of suply", example="Bangalore")

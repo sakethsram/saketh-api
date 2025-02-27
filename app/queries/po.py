@@ -21,7 +21,7 @@ FETCH_PO_LISTING_QUERY = """
                 EII.invoice_date, 
                 EII.invoice_inputs_file_path, 
                 EI.invoice_file_path,
-                EPO.created_on AS po_created,
+                EPO.ordered_on AS po_created,
                 EPO.total_qty_fulfilled as fulfilled_quantity
             FROM 
                 evenflow_invoice_inputs AS EII
@@ -71,7 +71,7 @@ FETCH_PO_LISTING_QUERY = """
 	            null as invoice_date, 
 	            null as invoice_inputs_file_path, 
 	            null as invoice_file_path,
-	            EPO.created_on as po_created,
+	            EPO.ordered_on as po_created,
                 EPO.total_qty_fulfilled as fulfilled_quantity
             FROM 
             	evenflow_purchase_orders EPO
