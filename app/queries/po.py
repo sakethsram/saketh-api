@@ -89,6 +89,7 @@ FETCH_PO_LISTING_QUERY = """
         LIMIT {page_size} OFFSET {page_size} * ({page_number} - 1);
     """
 
+
 FETCH_TOTAL_COUNT_PO_LISTING_QUERY = """
     SELECT count(*) as totalRecords FROM(		
 		    SELECT 
