@@ -3,11 +3,11 @@ FETCH_PO_LISTING_QUERY = """
 		    SELECT 
                 EPO.id as purchase_order_id,
                 EPO.evenflow_customer_master_id as customer_master_id,
-                CASE WHEN EPO.po_processing_status = 'PARTIALLY_FULFILLED' THEN 'Partial PO(Invoices)' 
-                     WHEN EPO.po_processing_status = 'FULFILLED' THEN 'Fulfilled PO(Invoices)'
+                CASE WHEN EPO.po_processing_status = 'PARTIALLY_FULFILLED' THEN 'Partial PO (Invoices)' 
+                     WHEN EPO.po_processing_status = 'FULFILLED' THEN 'Fulfilled PO (Invoices)'
                      WHEN EPO.po_processing_status = 'OPEN' THEN 'Open'
-                     WHEN EPO.po_processing_status = 'IN_PROGRESS_PARTIAL' THEN 'Partial PO(Invoice Inputs)'
-                     WHEN EPO.po_processing_status = 'IN_PROGRESS_FULL' THEN 'Fulfilled PO(Invoice Inputs)'
+                     WHEN EPO.po_processing_status = 'IN_PROGRESS_PARTIAL' THEN 'Partial PO (Invoice Inputs)'
+                     WHEN EPO.po_processing_status = 'IN_PROGRESS_FULL' THEN 'Fulfilled PO (Invoice Inputs)'
                      WHEN EPO.po_processing_status = 'CLOSED' THEN 'Closed' END
                 AS type, 
                 EPO.po_number, 
@@ -53,11 +53,11 @@ FETCH_PO_LISTING_QUERY = """
             SELECT 
                 EPO.id as purchase_order_id,
                 EPO.evenflow_customer_master_id as customer_master_id,
-                CASE WHEN EPO.po_processing_status = 'PARTIALLY_FULFILLED' THEN 'Partial PO(Invoices)' 
-                     WHEN EPO.po_processing_status = 'FULFILLED' THEN 'Fulfilled PO(Invoices)'
+                CASE WHEN EPO.po_processing_status = 'PARTIALLY_FULFILLED' THEN 'Partial PO (Invoices)' 
+                     WHEN EPO.po_processing_status = 'FULFILLED' THEN 'Fulfilled PO (Invoices)'
                      WHEN EPO.po_processing_status = 'OPEN' THEN 'Open'
-                     WHEN EPO.po_processing_status = 'IN_PROGRESS_PARTIAL' THEN 'Partial PO(Invoice Inputs)'
-                     WHEN EPO.po_processing_status = 'IN_PROGRESS_FULL' THEN 'Fulfilled PO(Invoice Inputs)'
+                     WHEN EPO.po_processing_status = 'IN_PROGRESS_PARTIAL' THEN 'Partial PO (Invoice Inputs)'
+                     WHEN EPO.po_processing_status = 'IN_PROGRESS_FULL' THEN 'Fulfilled PO (Invoice Inputs)'
                      WHEN EPO.po_processing_status = 'CLOSED' THEN 'Closed' END
                 AS type,
 	            EPO.po_number, 
@@ -92,11 +92,11 @@ FETCH_PO_LISTING_QUERY = """
 FETCH_TOTAL_COUNT_PO_LISTING_QUERY = """
     SELECT count(*) as totalRecords FROM(		
 		    SELECT 
-                CASE WHEN EPO.po_processing_status = 'PARTIALLY_FULFILLED' THEN 'Partial PO(Invoices)' 
-                WHEN EPO.po_processing_status = 'FULFILLED' THEN 'Fulfilled PO(Invoices)'
+                CASE WHEN EPO.po_processing_status = 'PARTIALLY_FULFILLED' THEN 'Partial PO (Invoices)' 
+                WHEN EPO.po_processing_status = 'FULFILLED' THEN 'Fulfilled PO (Invoices)'
                 WHEN EPO.po_processing_status = 'OPEN' THEN 'Open'
-                WHEN EPO.po_processing_status = 'IN_PROGRESS_PARTIAL' THEN 'Partial PO(Invoice Inputs)'
-                WHEN EPO.po_processing_status = 'IN_PROGRESS_FULL' THEN 'Fulfilled PO(Invoice Inputs)'
+                WHEN EPO.po_processing_status = 'IN_PROGRESS_PARTIAL' THEN 'Partial PO (Invoice Inputs)'
+                WHEN EPO.po_processing_status = 'IN_PROGRESS_FULL' THEN 'Fulfilled PO (Invoice Inputs)'
                 WHEN EPO.po_processing_status = 'CLOSED' THEN 'Closed' END
                 AS type, 
                 EPO.po_number, 
@@ -139,11 +139,11 @@ FETCH_TOTAL_COUNT_PO_LISTING_QUERY = """
             UNION
 
             SELECT 
-	            CASE WHEN EPO.po_processing_status = 'PARTIALLY_FULFILLED' THEN 'Partial PO(Invoices)' 
-                WHEN EPO.po_processing_status = 'FULFILLED' THEN 'Fulfilled PO(Invoices)'
+	            CASE WHEN EPO.po_processing_status = 'PARTIALLY_FULFILLED' THEN 'Partial PO (Invoices)' 
+                WHEN EPO.po_processing_status = 'FULFILLED' THEN 'Fulfilled PO (Invoices)'
                 WHEN EPO.po_processing_status = 'OPEN' THEN 'Open'
-                WHEN EPO.po_processing_status = 'IN_PROGRESS_PARTIAL' THEN 'Partial PO(Invoice Inputs)'
-                WHEN EPO.po_processing_status = 'IN_PROGRESS_FULL' THEN 'Fulfilled PO(Invoice Inputs)'
+                WHEN EPO.po_processing_status = 'IN_PROGRESS_PARTIAL' THEN 'Partial PO (Invoice Inputs)'
+                WHEN EPO.po_processing_status = 'IN_PROGRESS_FULL' THEN 'Fulfilled PO (Invoice Inputs)'
                 WHEN EPO.po_processing_status = 'CLOSED' THEN 'Closed' END
                 AS type,  
 	            EPO.po_number, 
@@ -203,11 +203,11 @@ PO_DETAILS_QUERY_BY_PO_NUMBER = """
         cancelled_total_cost,
 	    delivery_address,
         delivery_address_to,
-        CASE WHEN po_processing_status = 'PARTIALLY_FULFILLED' THEN 'Partial PO(Invoices)' 
-                     WHEN po_processing_status = 'FULFILLED' THEN 'Fulfilled PO(Invoices)'
+        CASE WHEN po_processing_status = 'PARTIALLY_FULFILLED' THEN 'Partial PO (Invoices)' 
+                     WHEN po_processing_status = 'FULFILLED' THEN 'Fulfilled PO (Invoices)'
                      WHEN po_processing_status = 'OPEN' THEN 'Open'
-                     WHEN po_processing_status = 'IN_PROGRESS_PARTIAL' THEN 'Partial PO(Invoice Inputs)'
-                     WHEN po_processing_status = 'IN_PROGRESS_FULL' THEN 'Fulfilled PO(Invoice Inputs)'
+                     WHEN po_processing_status = 'IN_PROGRESS_PARTIAL' THEN 'Partial PO (Invoice Inputs)'
+                     WHEN po_processing_status = 'IN_PROGRESS_FULL' THEN 'Fulfilled PO (Invoice Inputs)'
                      WHEN po_processing_status = 'CLOSED' THEN 'Closed' END as po_processing_status
     FROM
 	    evenflow_purchase_orders 
