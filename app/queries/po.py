@@ -242,7 +242,8 @@ PO_LINE_ITEM_DETAILS_QUERY_BY_PO_NUMBER_WITHOUT_FULFILLED = """
 	    po.id = poli.evenflow_purchase_orders_id
     WHERE 
 	    po.po_number = '{po_number}' and
-        poli.po_line_item_processing_status != 'FULFILLED'
+        poli.po_line_item_processing_status != 'FULFILLED' and 
+        qty_accepted > 0
 
     """
 
