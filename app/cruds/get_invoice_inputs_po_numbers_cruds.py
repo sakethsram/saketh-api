@@ -145,12 +145,18 @@ def update_po_processing_status(db: Session, po_number: str):
     db.commit()
 
     if db.query(EvenflowPurchaseOrderLineItem).filter(
-        EvenflowPurchaseOrderLineItem.purchase_order_number == po_number,
         EvenflowPurchaseOrderLineItem.po_line_item_processing_status.in_(['OPEN', 'PARTIALLY_FULFILLED'])
     ).count() > 0:
         po_status = 'PARTIALLY_FULFILLED'
     else:
         po_status = 'FULFILLED'
 
-    db.query(EvenflowPurchaseOrder).filter_by(purchase_order_number=po_number).update({"po_processing_status": po_status})
+    db.query(EvenflowPurchaseOrder).filter_by(po_number=po_number).update({"po_processing_status": po_status})
     db.commit()
+
+
+
+
+def get_high_value_invoices(session: Session, threshold: float = 50000):
+    """Fetch invoices with an invoice amount greater than the given threshold."""
+    return session.query(EvenflowInvoices).filter(EvenflowInvoices.invoice_amount > threshold).all()

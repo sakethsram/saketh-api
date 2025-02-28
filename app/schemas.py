@@ -1,7 +1,10 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List
+from typing import Optional
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel
+from pydantic import Field
+from pydantic import HttpUrl
 
 
 class UserBase(BaseModel):
@@ -224,3 +227,17 @@ class Invoice(BaseModel):
     custom_fields: List[CustomField]
     line_items: List[InvoiceLineItem]
     notes: Optional[str]
+
+
+class EwayBillUpdateRequest(BaseModel):
+    id: int
+    invoiceNumber: str
+    ewayBillNumber: Optional[str] = None
+    transportProviderName: Optional[str] = None
+    transportProviderContact: Optional[str] = None
+    transportProviderVehicleNumber: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class GenerateEwayBillRequest(BaseModel):
+    ewayBillNumber: str

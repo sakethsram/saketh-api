@@ -13,3 +13,4 @@ pdbwhereami
 pandas
 xlsxwriter
 ruff
+openpyxl

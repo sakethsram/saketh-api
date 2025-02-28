@@ -1,21 +1,21 @@
-from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    TIMESTAMP,
-    SmallInteger,
-    ForeignKey,
-    Float,
-    DECIMAL,
-)
+from datetime import datetime
+
+from sqlalchemy import DECIMAL
+from sqlalchemy import TIMESTAMP
+from sqlalchemy import Column
+from sqlalchemy import Date
+from sqlalchemy import DateTime
+from sqlalchemy import Float
+from sqlalchemy import ForeignKey
+from sqlalchemy import Integer
+from sqlalchemy import Numeric
+from sqlalchemy import SmallInteger
+from sqlalchemy import String
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from datetime import datetime
-from app.database import Base
-from sqlalchemy import Numeric, Date
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.sql import func
 
+from app.database import Base
 
 
 class User(Base):
@@ -614,6 +614,7 @@ class EvenflowInvoices(Base):
     product = relationship('EvenflowProductMaster', backref='invoices')
     purchase_order = relationship('EvenflowPurchaseOrder', backref='invoices')
     warehouse = relationship('EvenflowWarehouses', backref='invoices')
+    
 
 
 class EvenflowInvoicesLineItems(Base):
@@ -683,7 +684,52 @@ class user_nameAndOTP(Base):
     generated_at = Column(TIMESTAMP(timezone=False), default=datetime.now)  # timestamp without time zone
     valid_until = Column(TIMESTAMP(timezone=False), nullable=False)  # timestamp without time zone
 
+class EvenflowInvoicesEwayBills(Base):
+    __tablename__ = "evenflow_invoices_eway_bills"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    evenflow_invoices_id = Column(Integer, ForeignKey("evenflow_invoices.id"), nullable=False)
+    eway_bill_number = Column(String(125))
+    purchase_order_number = Column(String(125), nullable=False)
+    invoice_number = Column(String(125), nullable=False)
+    transport_provider_company_name = Column(String(125))
+    transport_provider_contact_name = Column(String(125))
+    transport_provider_contact_number = Column(String(125))
+    transport_provider_vehicle_number = Column(String(125))
+    notes = Column(String(250))
+    created_on = Column(TIMESTAMP, nullable=False, default=func.now())
+    created_by = Column(String(125))
+    modified_on = Column(TIMESTAMP, nullable=False, default=func.now(), onupdate=func.now())
+    modified_by = Column(String(125))
+    active_flag = Column(SmallInteger, nullable=False)
 
 
 
 
+
+
+class EvenflowInvoicePayments(Base):
+    __tablename__ = 'evenflow_invoice_payments'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    client_id = Column(Integer)
+    evenflow_customer_master_id = Column(Integer, nullable=False)
+    evenflow_invoice_id = Column(Integer)
+    invoice_number = Column(String(125), nullable=False)
+    payment_number = Column(String(125), nullable=False)
+    invoice_date = Column(Date, nullable=False)
+    transaction_type = Column(String(125), nullable=False)
+    transaction_description = Column(String(250), nullable=True)
+    reference_details = Column(String(125), nullable=False)
+    original_invoice_number = Column(String(125), nullable=True)
+    invoice_amount = Column(Numeric(20, 2), nullable=False)
+    invoice_currency = Column(String(125), nullable=False)
+    withholding_amount = Column(Numeric(20, 2), nullable=False, default=0)
+    terms_discount_taken = Column(Numeric(20, 2), nullable=False, default=0)
+    amount_paid = Column(Numeric(20, 2), nullable=False, default=0)
+    remaining_amount = Column(Numeric(20, 2), nullable=False, default=0)
+    created_on = Column(DateTime, nullable=False, server_default=func.current_timestamp())
+    created_by = Column(String(125), nullable=True)
+    modified_on = Column(DateTime, nullable=False, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
+    modified_by = Column(String(125), nullable=True)
+    active_flag = Column(SmallInteger, nullable=False)

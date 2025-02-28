@@ -1,16 +1,24 @@
+import logging
+
 from fastapi import FastAPI
-from app.routers import invoice_generation_routers, po, invoiceInput, warehouse, reportingDetails
-from app.routers import auth, users
-from app.routers import get_distys
-from app.routers import common
-from app.routers import client_onboard
-from app.routers import password
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+
 from app.config import load_clients
 from app.logging_config import setup_logging
-import logging
+from app.routers import auth
 from app.routers import client_onboard
-from starlette.middleware.base import BaseHTTPMiddleware
+from app.routers import common
+from app.routers import eway_bills_routers
+from app.routers import get_distys
+from app.routers import invoice_generation_routers
+from app.routers import invoiceInput
+from app.routers import password
+from app.routers import po
+from app.routers import reportingDetails
+from app.routers import settlement_reports_router
+from app.routers import users
+from app.routers import warehouse
 
 # Setup logging
 setup_logging()
@@ -67,6 +75,8 @@ app.include_router(warehouse.router)
 app.include_router(reportingDetails.router)
 app.include_router(invoice_generation_routers.router,tags=['Invoice Generation API'])
 app.include_router(password.router)
+app.include_router(eway_bills_routers.router,tags=['Eway-Bill Generation API'])
+app.include_router(settlement_reports_router.router,tags=['Settlement Reports'])
 logging.debug("Debugging initialized")
 
 

@@ -41,7 +41,7 @@ def read_pdf_as_bytes(file_path: str) -> bytes:
     with open(file_path, "rb") as file:
         return file.read()
 
-def upload_pdf_to_s3(file: bytes, po_number: str, invoice_number: str) -> Optional[str]:
+def upload_pdf_to_s3(file: bytes, po_number: str, invoice_number: str,document_type:str='invoice') -> Optional[str]:
     """Uploads a PDF file to an S3 bucket under a structured folder path.
 
     :param file: Byte content of the PDF file
@@ -70,7 +70,10 @@ def upload_pdf_to_s3(file: bytes, po_number: str, invoice_number: str) -> Option
     s3 = session.client("s3")
 
     current_date = datetime.now().strftime("%Y-%m-%d")
-    s3_key = f"evenflow/GeneratedInvoices/{current_date}/GeneratedInvoice_{file_name}.pdf"
+    if document_type=='eway_bill':
+        s3_key = f"evenflow/GeneratedEwayBills/{current_date}/GeneratedEwayBill_{file_name}.pdf"
+    else:
+        s3_key = f"evenflow/GeneratedInvoices/{current_date}/GeneratedInvoice_{file_name}.pdf"
 
     try:
         s3.put_object(
