@@ -1,6 +1,7 @@
 """Invoice Generation Routes."""
 from collections import OrderedDict
 from datetime import datetime
+from datetime import timedelta
 from io import BytesIO
 from typing import Optional
 
@@ -226,7 +227,7 @@ def generate_invoice(
             "invoiceAmount": float(invoice.invoice_amount),
             "invoiceStatus": invoice.invoice_status,
             "customerName": invoice.customer_name,
-            "paymentDueDate": (invoice.invoice_date + datetime.timedelta(days=45)),
+            "paymentDueDate": (invoice.invoice_date + timedelta(days=45)),
             "paymentTerms": "Next due in 45 days",
             "poFilePath": invoice.po_file_path,
             "invoiceInputsFilePath": invoice.invoice_inputs_file_path,
