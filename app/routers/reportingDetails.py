@@ -31,7 +31,8 @@ from app.queries.reportingDetails import (
     INVOICE_TREND_CHART_DAILY_QUERY,
     INVOICE_TREND_CHART_MONTHLY_QUERY,
     INVOICE_TREND_CHART_QUARTERLY_QUERY,
-    INVOICE_TREND_CHART_YEARLY_QUERY
+    INVOICE_TREND_CHART_YEARLY_QUERY,
+    PO_DASHBOARD_LAST_REFRESHED_QUEREY
 )
 
 from enum import Enum
@@ -64,10 +65,12 @@ def get_warehouse_details(
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
     try:
+        poRefreshedTmstp = db.execute(text(PO_DASHBOARD_LAST_REFRESHED_QUEREY)).mappings().all()
         top5CustomersBasedOnPOCount = db.execute(text(TOP_5_CUSTOMERS_BASED_ON_PO_COUNT)).mappings().all()
         top5CustomersBasedOnPOAmount = db.execute(text(GET_PURCHASE_ORDER_TOP_CUSTOMERS_AGG_DETAILS)).mappings().all()
         top5CustomersAggregatedPOAndAmountQtrOnQtr = db.execute(text(AGG_PURCHASE_ORDER_TOP_CUSTOMER)).mappings().all()
         return {
+            "poRefreshedTmstp": convertKeysToCamelCase(poRefreshedTmstp),
             "top5CustomersBasedOnPOCount": convertKeysToCamelCase(top5CustomersBasedOnPOCount), 
             "top5CustomersBasedOnPOAmount": convertKeysToCamelCase(top5CustomersBasedOnPOAmount),
             "top5CustomersAggregatedPOAndAmountQtrOnQtr": convertKeysToCamelCase(top5CustomersAggregatedPOAndAmountQtrOnQtr)
