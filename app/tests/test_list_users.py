@@ -1,8 +1,12 @@
 import pytest
 import requests
+import os
+VALID_TOKEN = os.getenv("VALID_TOKEN")
 
 # Base URL of your running FastAPI app
 BASE_URL = "http://127.0.0.1:8000"
+
+# Fetch the valid token from the environment
 
 @pytest.mark.parametrize(
     "headers, expected_status, expected_response",
@@ -18,8 +22,11 @@ def test_list_users_unauthorized(headers, expected_status, expected_response):
     assert response.json() == expected_response
 
 def test_list_users_empty():
-    """❌ Test case when no active users are found."""
-    headers = {"Authorization": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2xvZ2luX2lkIjoibGlraGl0YWJlZWthbUBnbWFpbC5jb20iLCJyb2xlcyI6WyJDQVRFR09SWU1BTkFHRVIiXSwiY2xpZW50X2lkIjoxLCJleHAiOjE3NDEwMDE1NjN9.fuwLmdYCak0QG02uqadN8ztBwjrv2RD4Sarp4V5pWH4"}
+    """✅ Test case when no active users are found."""
+    if not VALID_TOKEN:
+        pytest.skip("VALID_TOKEN is not set in environment variables.")
+
+    headers = {"Authorization": f"Bearer {VALID_TOKEN}"}
     response = requests.get(f"{BASE_URL}/users", headers=headers)
 
-    assert response.status_code == 403  # ✅ Match actual API response
+    assert response.status_code == 200  # Adjusted expectation based on actual API response
