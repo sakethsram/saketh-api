@@ -2,47 +2,50 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout Feature Branch') {
+        stage('Clone Repository') {
             steps {
-                script {
-                    // Clone the feature branch
-                    checkout([$class: 'GitSCM', 
-                        branches: [[name: 'origin/feature-branch']],
-                        userRemoteConfigs: [[url: 'git@github.com:sakethsram/saketh-api.git']]
-                    ])
-                }
+                checkout scm
             }
         }
 
-        stage('Run Tests on Feature Branch') {
-            steps {
-                sh 'pytest app/tests/gcd'
-            }
-        }
-
-        stage('Check Merge Conflict') {
+        stage('Run Tests') {
             steps {
                 script {
-                    def mergeOutput = sh(script: "git checkout main && git pull origin main && git merge --no-commit --no-ff feature-branch", returnStatus: true)
-                    if (mergeOutput != 0) {
-                        error("Merge conflict detected! Resolve conflicts before merging.")
+                    try {
+                        sh 'pytest app/tests/gcd/'
+                    } catch (Exception e) {
+                        currentBuild.result = 'FAILURE'
+                        error "Tests failed. Stopping pipeline."
                     }
                 }
             }
         }
 
         stage('Merge to Main') {
+            when {
+                branch 'feature-branch'
+            }
             steps {
                 script {
-                    sh "git commit -m 'Merged feature-branch into main' && git push origin main"
+                    sh '''
+                    git config --global user.email "your-email@example.com"
+                    git config --global user.name "Jenkins"
+                    git checkout main
+                    git pull origin main
+                    git merge --no-ff feature-branch -m "Auto-merging feature-branch"
+                    git push origin main
+                    '''
                 }
             }
         }
+    }
 
-        stage('Run Tests on Main') {
-            steps {
-                sh 'pytest app/tests/gcd'
-            }
+    post {
+        success {
+            echo "Pipeline executed successfully! 🎉"
+        }
+        failure {
+            echo "Pipeline failed! ❌ Check the logs."
         }
     }
 }
