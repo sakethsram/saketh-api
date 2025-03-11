@@ -1,22 +1,47 @@
 pipeline {
-    agent any  // Run on any available Jenkins agent
-    
+    agent any
+
     stages {
-        stage('Clone Repository') {
+        stage('Checkout Feature Branch') {
             steps {
-                git branch: 'main', url: 'git@github.com:sakethsram/saketh-api.git'
+                script {
+                    // Clone the feature branch
+                    checkout([$class: 'GitSCM', 
+                        branches: [[name: 'origin/feature-branch']],
+                        userRemoteConfigs: [[url: 'git@github.com:sakethsram/saketh-api.git']]
+                    ])
+                }
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Run Tests on Feature Branch') {
             steps {
-                sh 'pip install -r requirements.txt'  // Install dependencies
+                sh 'pytest app/tests/gcd'
             }
         }
 
-        stage('Run Tests') {
+        stage('Check Merge Conflict') {
             steps {
-                sh 'pytest app/tests/gcd'  // Run tests
+                script {
+                    def mergeOutput = sh(script: "git checkout main && git pull origin main && git merge --no-commit --no-ff feature-branch", returnStatus: true)
+                    if (mergeOutput != 0) {
+                        error("Merge conflict detected! Resolve conflicts before merging.")
+                    }
+                }
+            }
+        }
+
+        stage('Merge to Main') {
+            steps {
+                script {
+                    sh "git commit -m 'Merged feature-branch into main' && git push origin main"
+                }
+            }
+        }
+
+        stage('Run Tests on Main') {
+            steps {
+                sh 'pytest app/tests/gcd'
             }
         }
     }
