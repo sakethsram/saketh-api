@@ -2,50 +2,22 @@ pipeline {
     agent any
 
     stages {
-        stage('Clone Repository') {
+        stage('Checkout') {
             steps {
-                checkout scm
+                script {
+                    def branch = env.BRANCH_NAME ?: 'main'
+                    checkout([$class: 'GitSCM', 
+                        branches: [[name: "*/${branch}"]],
+                        userRemoteConfigs: [[url: 'https://github.com/sakethsram/saketh-api.git']]
+                    ])
+                }
             }
         }
 
         stage('Run Tests') {
             steps {
-                script {
-                    try {
-                        sh 'pytest app/tests/gcd/'
-                    } catch (Exception e) {
-                        currentBuild.result = 'FAILURE'
-                        error "Tests failed. Stopping pipeline."
-                    }
-                }
+                sh 'python -m pytest app/tests/gcd/'
             }
-        }
-
-        stage('Merge to Main') {
-            when {
-                branch 'feature-branch'
-            }
-            steps {
-                script {
-                    sh '''
-                    git config --global user.email "your-email@example.com"
-                    git config --global user.name "Jenkins"
-                    git checkout main
-                    git pull origin main
-                    git merge --no-ff feature-branch -m "Auto-merging feature-branch"
-                    git push origin main
-                    '''
-                }
-            }
-        }
-    }
-
-    post {
-        success {
-            echo "Pipeline executed successfully! 🎉"
-        }
-        failure {
-            echo "Pipeline failed! ❌ Check the logs."
         }
     }
 }
